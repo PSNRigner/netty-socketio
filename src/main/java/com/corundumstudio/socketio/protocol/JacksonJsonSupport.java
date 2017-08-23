@@ -208,7 +208,7 @@ public class JacksonJsonSupport implements JsonSupport {
         private final ThreadLocal<List<byte[]>> arrays = new ThreadLocal<List<byte[]>>() {
             @Override
             protected List<byte[]> initialValue() {
-                return new ArrayList<byte[]>();
+                return new ArrayList<>();
             };
         };
 
@@ -217,7 +217,7 @@ public class JacksonJsonSupport implements JsonSupport {
         }
 
         @Override
-        public boolean isEmpty(byte[] value) {
+        public boolean isEmpty(SerializerProvider provider,byte[] value) {
             return (value == null) || (value.length == 0);
         }
 
@@ -225,7 +225,7 @@ public class JacksonJsonSupport implements JsonSupport {
         public void serialize(byte[] value, JsonGenerator jgen, SerializerProvider provider)
             throws IOException, JsonGenerationException
         {
-            Map<String, Object> map = new HashMap<String, Object>();
+            Map<String, Object> map = new HashMap<>();
             map.put("num", arrays.get().size());
             map.put("_placeholder", true);
             jgen.writeObject(map);
@@ -320,7 +320,7 @@ public class JacksonJsonSupport implements JsonSupport {
 
         objectMapper.setSerializationInclusion(Include.NON_NULL);
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        objectMapper.configure(SerializationFeature.WRITE_BIGDECIMAL_AS_PLAIN, true);
+        objectMapper.configure(JsonGenerator.Feature.WRITE_BIGDECIMAL_AS_PLAIN, true);
         objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
     }
 
