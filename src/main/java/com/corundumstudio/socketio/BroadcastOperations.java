@@ -20,7 +20,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import com.corundumstudio.socketio.misc.IterableCollection;
@@ -47,27 +46,23 @@ public class BroadcastOperations implements ClientOperations {
     }
 
     private void dispatch(Packet packet) {
-        Map<String, Set<String>> namespaceRooms = new HashMap<String, Set<String>>();
+        Map<String, Set<String>> namespaceRooms = new HashMap<>();
         for (SocketIOClient socketIOClient : clients) {
             Namespace namespace = (Namespace)socketIOClient.getNamespace();
             Set<String> rooms = namespace.getRooms(socketIOClient);
             
             Set<String> roomsList = namespaceRooms.get(namespace.getName());
             if (roomsList == null) {
-                roomsList = new HashSet<String>();
+                roomsList = new HashSet<>();
                 namespaceRooms.put(namespace.getName(), roomsList);
             }
             roomsList.addAll(rooms);
         }
-        for (Entry<String, Set<String>> entry : namespaceRooms.entrySet()) {
-            for (String room : entry.getValue()) {
-                storeFactory.pubSubStore().publish(PubSubType.DISPATCH, new DispatchMessage(room, packet, entry.getKey()));
-            }
-        }
+        namespaceRooms.forEach((key, value) -> value.forEach(room -> storeFactory.pubSubStore().publish(PubSubType.DISPATCH, new DispatchMessage(room, packet, key))));
     }
 
     public Collection<SocketIOClient> getClients() {
-        return new IterableCollection<SocketIOClient>(clients);
+        return new IterableCollection<>(clients);
     }
 
     @Override

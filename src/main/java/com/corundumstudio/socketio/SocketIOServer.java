@@ -148,14 +148,11 @@ public class SocketIOServer implements ClientListeners {
             addr = new InetSocketAddress(configCopy.getHostname(), configCopy.getPort());
         }
 
-        return b.bind(addr).addListener(new FutureListener<Void>() {
-            @Override
-            public void operationComplete(Future<Void> future) throws Exception {
-                if (future.isSuccess()) {
-                    log.info("SocketIO server started at port: {}", configCopy.getPort());
-                } else {
-                    log.error("SocketIO server start failed at port: {}!", configCopy.getPort());
-                }
+        return b.bind(addr).addListener((FutureListener<Void>) future -> {
+            if (future.isSuccess()) {
+                log.info("SocketIO server started at port: {}", configCopy.getPort());
+            } else {
+                log.error("SocketIO server start failed at port: {}!", configCopy.getPort());
             }
         });
     }
