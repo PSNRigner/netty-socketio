@@ -4,7 +4,7 @@
 
     <groupId>com.corundumstudio.socketio</groupId>
     <artifactId>netty-socketio</artifactId>
-    <version>1.7.13.c-SNAPSHOT</version>
+    <version>1.7.13.b-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <name>NettySocketIO</name>
     <description>Socket.IO server implemented on Java</description>
@@ -55,7 +55,7 @@
     <properties>
         <skipTests>true</skipTests>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <netty.version>4.1.14.Final</netty.version>
+        <netty.version>4.1.15.Final</netty.version>
         <spring.version>4.3.10.RELEASE</spring.version>
     </properties>
 
