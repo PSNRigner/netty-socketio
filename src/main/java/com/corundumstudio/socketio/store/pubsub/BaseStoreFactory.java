@@ -36,49 +36,32 @@ public abstract class BaseStoreFactory implements StoreFactory {
 
     @Override
     public void init(final NamespacesHub namespacesHub, final AuthorizeHandler authorizeHandler, JsonSupport jsonSupport) {
-        pubSubStore().subscribe(PubSubType.DISCONNECT, new PubSubListener<DisconnectMessage>() {
-            @Override
-            public void onMessage(DisconnectMessage msg) {
-                log.debug("{} sessionId: {}", PubSubType.DISCONNECT, msg.getSessionId());
-            }
-        }, DisconnectMessage.class);
+        pubSubStore().subscribe(PubSubType.DISCONNECT, msg -> log.debug("{} sessionId: {}", PubSubType.DISCONNECT, msg.getSessionId()), DisconnectMessage.class);
 
-        pubSubStore().subscribe(PubSubType.CONNECT, new PubSubListener<ConnectMessage>() {
-            @Override
-            public void onMessage(ConnectMessage msg) {
-                authorizeHandler.connect(msg.getSessionId());
-                log.debug("{} sessionId: {}", PubSubType.CONNECT, msg.getSessionId());
-            }
+        pubSubStore().subscribe(PubSubType.CONNECT, msg -> {
+            authorizeHandler.connect(msg.getSessionId());
+            log.debug("{} sessionId: {}", PubSubType.CONNECT, msg.getSessionId());
         }, ConnectMessage.class);
 
-        pubSubStore().subscribe(PubSubType.DISPATCH, new PubSubListener<DispatchMessage>() {
-            @Override
-            public void onMessage(DispatchMessage msg) {
-                String name = msg.getRoom();
+        pubSubStore().subscribe(PubSubType.DISPATCH, msg -> {
+            String name = msg.getRoom();
 
-                namespacesHub.get(msg.getNamespace()).dispatch(name, msg.getPacket());
-                log.debug("{} packet: {}", PubSubType.DISPATCH, msg.getPacket());
-            }
+            namespacesHub.get(msg.getNamespace()).dispatch(name, msg.getPacket());
+            log.debug("{} packet: {}", PubSubType.DISPATCH, msg.getPacket());
         }, DispatchMessage.class);
 
-        pubSubStore().subscribe(PubSubType.JOIN, new PubSubListener<JoinLeaveMessage>() {
-            @Override
-            public void onMessage(JoinLeaveMessage msg) {
-                String name = msg.getRoom();
+        pubSubStore().subscribe(PubSubType.JOIN, msg -> {
+            String name = msg.getRoom();
 
-                namespacesHub.get(msg.getNamespace()).join(name, msg.getSessionId());
-                log.debug("{} sessionId: {}", PubSubType.JOIN, msg.getSessionId());
-            }
+            namespacesHub.get(msg.getNamespace()).join(name, msg.getSessionId());
+            log.debug("{} sessionId: {}", PubSubType.JOIN, msg.getSessionId());
         }, JoinLeaveMessage.class);
 
-        pubSubStore().subscribe(PubSubType.LEAVE, new PubSubListener<JoinLeaveMessage>() {
-            @Override
-            public void onMessage(JoinLeaveMessage msg) {
-                String name = msg.getRoom();
+        pubSubStore().subscribe(PubSubType.LEAVE, msg -> {
+            String name = msg.getRoom();
 
-                namespacesHub.get(msg.getNamespace()).leave(name, msg.getSessionId());
-                log.debug("{} sessionId: {}", PubSubType.LEAVE, msg.getSessionId());
-            }
+            namespacesHub.get(msg.getNamespace()).leave(name, msg.getSessionId());
+            log.debug("{} sessionId: {}", PubSubType.LEAVE, msg.getSessionId());
         }, JoinLeaveMessage.class);
     }
 

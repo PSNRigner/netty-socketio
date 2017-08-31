@@ -54,18 +54,15 @@ public class RedissonPubSubStore implements PubSubStore {
     public <T extends PubSubMessage> void subscribe(PubSubType type, final PubSubListener<T> listener, Class<T> clazz) {
         String name = type.toString();
         RTopic<T> topic = redissonSub.getTopic(name);
-        int regId = topic.addListener(new MessageListener<T>() {
-            @Override
-            public void onMessage(String channel, T msg) {
-                if (!nodeId.equals(msg.getNodeId())) {
-                    listener.onMessage(msg);
-                }
+        int regId = topic.addListener((channel, msg) -> {
+            if (!nodeId.equals(msg.getNodeId())) {
+                listener.onMessage(msg);
             }
         });
 
         Queue<Integer> list = map.get(name);
         if (list == null) {
-            list = new ConcurrentLinkedQueue<Integer>();
+            list = new ConcurrentLinkedQueue<>();
             Queue<Integer> oldList = map.putIfAbsent(name, list);
             if (oldList != null) {
                 list = oldList;
@@ -79,9 +76,7 @@ public class RedissonPubSubStore implements PubSubStore {
         String name = type.toString();
         Queue<Integer> regIds = map.remove(name);
         RTopic<Object> topic = redissonSub.getTopic(name);
-        for (Integer id : regIds) {
-            topic.removeListener(id);
-        }
+        regIds.forEach(topic::removeListener);
     }
 
     @Override

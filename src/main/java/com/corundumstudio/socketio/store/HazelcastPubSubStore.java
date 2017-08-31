@@ -55,19 +55,16 @@ public class HazelcastPubSubStore implements PubSubStore {
     public <T extends PubSubMessage> void subscribe(PubSubType type, final PubSubListener<T> listener, Class<T> clazz) {
         String name = type.toString();
         ITopic<T> topic = hazelcastSub.getTopic(name);
-        String regId = topic.addMessageListener(new MessageListener<T>() {
-            @Override
-            public void onMessage(Message<T> message) {
-                PubSubMessage msg = message.getMessageObject();
-                if (!nodeId.equals(msg.getNodeId())) {
-                    listener.onMessage(message.getMessageObject());
-                }
+        String regId = topic.addMessageListener(message -> {
+            PubSubMessage msg = message.getMessageObject();
+            if (!nodeId.equals(msg.getNodeId())) {
+                listener.onMessage(message.getMessageObject());
             }
         });
 
         Queue<String> list = map.get(name);
         if (list == null) {
-            list = new ConcurrentLinkedQueue<String>();
+            list = new ConcurrentLinkedQueue<>();
             Queue<String> oldList = map.putIfAbsent(name, list);
             if (oldList != null) {
                 list = oldList;
@@ -81,9 +78,7 @@ public class HazelcastPubSubStore implements PubSubStore {
         String name = type.toString();
         Queue<String> regIds = map.remove(name);
         ITopic<Object> topic = hazelcastSub.getTopic(name);
-        for (String id : regIds) {
-            topic.removeMessageListener(id);
-        }
+        regIds.forEach(topic::removeMessageListener);
     }
 
     @Override
