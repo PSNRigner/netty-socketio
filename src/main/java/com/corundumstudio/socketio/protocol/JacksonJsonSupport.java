@@ -36,10 +36,8 @@ import com.corundumstudio.socketio.AckCallback;
 import com.corundumstudio.socketio.MultiTypeAckCallback;
 import com.corundumstudio.socketio.namespace.Namespace;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.BeanDescription;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -75,9 +73,8 @@ public class JacksonJsonSupport implements JsonSupport {
         }
 
         @Override
-        public AckArgs deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException,
-                JsonProcessingException {
-            List<Object> args = new ArrayList<Object>();
+        public AckArgs deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
+            List<Object> args = new ArrayList<>();
             AckArgs result = new AckArgs(args);
 
             ObjectMapper mapper = (ObjectMapper) jp.getCodec();
@@ -164,8 +161,7 @@ public class JacksonJsonSupport implements JsonSupport {
         }
 
         @Override
-        public Event deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException,
-                JsonProcessingException {
+        public Event deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
             ObjectMapper mapper = (ObjectMapper) jp.getCodec();
             String eventName = jp.nextTextValue();
 
@@ -177,7 +173,7 @@ public class JacksonJsonSupport implements JsonSupport {
                 }
             }
 
-            List<Object> eventArgs = new ArrayList<Object>();
+            List<Object> eventArgs = new ArrayList<>();
             Event event = new Event(eventName, eventArgs);
             List<Class<?>> eventClasses = eventMapping.get(ek);
             int i = 0;
@@ -205,12 +201,7 @@ public class JacksonJsonSupport implements JsonSupport {
 
         private static final long serialVersionUID = 3420082888596468148L;
 
-        private final ThreadLocal<List<byte[]>> arrays = new ThreadLocal<List<byte[]>>() {
-            @Override
-            protected List<byte[]> initialValue() {
-                return new ArrayList<>();
-            };
-        };
+        private final ThreadLocal<List<byte[]>> arrays = ThreadLocal.withInitial(() -> new ArrayList<>());
 
         public ByteArraySerializer() {
             super(byte[].class);
@@ -223,8 +214,7 @@ public class JacksonJsonSupport implements JsonSupport {
 
         @Override
         public void serialize(byte[] value, JsonGenerator jgen, SerializerProvider provider)
-            throws IOException, JsonGenerationException
-        {
+            throws IOException {
             Map<String, Object> map = new HashMap<>();
             map.put("num", arrays.get().size());
             map.put("_placeholder", true);
@@ -235,8 +225,7 @@ public class JacksonJsonSupport implements JsonSupport {
         @Override
         public void serializeWithType(byte[] value, JsonGenerator jgen, SerializerProvider provider,
                 TypeSerializer typeSer)
-            throws IOException, JsonGenerationException
-        {
+            throws IOException {
             serialize(value, jgen, provider);
         }
 
@@ -265,7 +254,7 @@ public class JacksonJsonSupport implements JsonSupport {
         }
 
         public void clear() {
-            arrays.set(new ArrayList<byte[]>());
+            arrays.set(new ArrayList<>());
         }
 
     }
@@ -292,8 +281,8 @@ public class JacksonJsonSupport implements JsonSupport {
     }
 
     protected final ExBeanSerializerModifier modifier = new ExBeanSerializerModifier();
-    protected final ThreadLocal<String> namespaceClass = new ThreadLocal<String>();
-    protected final ThreadLocal<AckCallback<?>> currentAckClass = new ThreadLocal<AckCallback<?>>();
+    protected final ThreadLocal<String> namespaceClass = new ThreadLocal<>();
+    protected final ThreadLocal<AckCallback<?>> currentAckClass = new ThreadLocal<>();
     protected final ObjectMapper objectMapper = new ObjectMapper();
     protected final EventDeserializer eventDeserializer = new EventDeserializer();
     protected final AckArgsDeserializer ackArgsDeserializer = new AckArgsDeserializer();
