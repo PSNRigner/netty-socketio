@@ -29,9 +29,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.corundumstudio.socketio.AckCallback;
 import com.corundumstudio.socketio.MultiTypeAckCallback;
 import com.corundumstudio.socketio.namespace.Namespace;
@@ -61,6 +58,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.fasterxml.jackson.databind.type.ArrayType;
+
 
 public class JacksonJsonSupport implements JsonSupport {
 
@@ -183,7 +181,7 @@ public class JacksonJsonSupport implements JsonSupport {
                     break;
                 }
                 if (i > eventClasses.size() - 1) {
-                    log.debug("Event {} has more args than declared in handler: {}", eventName, null);
+//                    log.debug("Event {} has more args than declared in handler: {}", eventName, null);
                     break;
                 }
                 Class<?> eventClass = eventClasses.get(i);
@@ -287,7 +285,6 @@ public class JacksonJsonSupport implements JsonSupport {
     protected final EventDeserializer eventDeserializer = new EventDeserializer();
     protected final AckArgsDeserializer ackArgsDeserializer = new AckArgsDeserializer();
 
-    protected static final Logger log = LoggerFactory.getLogger(JacksonJsonSupport.class);
 
     public JacksonJsonSupport() {
         this(new Module[] {});
