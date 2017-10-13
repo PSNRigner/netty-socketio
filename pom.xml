@@ -43,12 +43,12 @@
         <repository>
             <id>12lian_releases</id>
             <name>12lian_releases</name>
-            <url>http://develop.12lian.com/nexus/content/repositories/releases/</url>
+            <url>http://47.92.35.181:8081/nexus/content/repositories/releases/</url>
         </repository>
         <snapshotRepository>
             <id>12lian_snapshots</id>
             <name>12lian_snapshots</name>
-            <url>http://develop.12lian.com/nexus/content/repositories/snapshots/</url>
+            <url>http://47.92.35.181:8081/nexus/content/repositories/snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
 
@@ -208,7 +208,7 @@
         <repository>
             <id>12lian_public</id>
             <name>12lian_public</name>
-            <url>http://develop.12lian.com/nexus/content/groups/public/</url>
+            <url>http://47.92.35.181:8081/nexus/content/groups/public/</url>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
