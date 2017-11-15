@@ -154,18 +154,15 @@ public class WebSocketTransport extends ChannelInboundHandlerAdapter {
         WebSocketServerHandshaker handshaker = factory.newHandshaker(req);
         if (handshaker != null) {
             ChannelFuture f = handshaker.handshake(channel, req);
-            f.addListener(new ChannelFutureListener() {
-                @Override
-                public void operationComplete(ChannelFuture future) throws Exception {
-                    if (!future.isSuccess()) {
-                        log.error("Can't handshake " + sessionId, future.cause());
-                        return;
-                    }
-
-                    channel.pipeline().addBefore(SocketIOChannelInitializer.WEB_SOCKET_TRANSPORT, SocketIOChannelInitializer.WEB_SOCKET_AGGREGATOR,
-                            new WebSocketFrameAggregator(configuration.getMaxFramePayloadLength()));
-                    connectClient(channel, sessionId);
+            f.addListener((ChannelFutureListener) future -> {
+                if (!future.isSuccess()) {
+                    log.error("Can't handshake " + sessionId, future.cause());
+                    return;
                 }
+
+                channel.pipeline().addBefore(SocketIOChannelInitializer.WEB_SOCKET_TRANSPORT, SocketIOChannelInitializer.WEB_SOCKET_AGGREGATOR,
+                        new WebSocketFrameAggregator(configuration.getMaxFramePayloadLength()));
+                connectClient(channel, sessionId);
             });
         } else {
             WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(ctx.channel());
@@ -187,16 +184,13 @@ public class WebSocketTransport extends ChannelInboundHandlerAdapter {
 
         if (client.getCurrentTransport() == Transport.POLLING) {
             SchedulerKey key = new SchedulerKey(SchedulerKey.Type.UPGRADE_TIMEOUT, sessionId);
-            scheduler.schedule(key, new Runnable() {
-                @Override
-                public void run() {
-                    ClientHead clientHead = clientsBox.get(sessionId);
-                    if (clientHead != null) {
-                        if (log.isDebugEnabled()) {
-                            log.debug("client did not complete upgrade - closing transport");
-                        }
-                        clientHead.onChannelDisconnect();
+            scheduler.schedule(key, () -> {
+                ClientHead clientHead = clientsBox.get(sessionId);
+                if (clientHead != null) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("client did not complete upgrade - closing transport");
                     }
+                    clientHead.onChannelDisconnect();
                 }
             }, configuration.getUpgradeTimeout(), TimeUnit.MILLISECONDS);
         }

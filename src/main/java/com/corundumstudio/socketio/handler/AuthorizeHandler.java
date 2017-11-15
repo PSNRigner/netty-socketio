@@ -92,12 +92,9 @@ public class AuthorizeHandler extends ChannelInboundHandlerAdapter implements Di
     @Override
     public void channelActive(final ChannelHandlerContext ctx) throws Exception {
         SchedulerKey key = new SchedulerKey(Type.PING_TIMEOUT, ctx.channel());
-        disconnectScheduler.schedule(key, new Runnable() {
-            @Override
-            public void run() {
-                ctx.channel().close();
-                log.debug("Client with ip {} opened channel but doesn't send any data! Channel closed!", ctx.channel().remoteAddress());
-            }
+        disconnectScheduler.schedule(key, () -> {
+            ctx.channel().close();
+            log.debug("Client with ip {} opened channel but doesn't send any data! Channel closed!", ctx.channel().remoteAddress());
         }, configuration.getFirstDataTimeout(), TimeUnit.MILLISECONDS);
         super.channelActive(ctx);
     }
@@ -109,6 +106,15 @@ public class AuthorizeHandler extends ChannelInboundHandlerAdapter implements Di
 
         if (msg instanceof FullHttpRequest) {
             FullHttpRequest req = (FullHttpRequest) msg;
+            String clientIP = req.headers().get("X-Forwarded-For");
+            log.info("远程地址 X-Forwarded-For {} ",clientIP);
+            if (clientIP == null) {
+                InetSocketAddress insocket = (InetSocketAddress) ctx.channel()
+                        .remoteAddress();
+                clientIP = insocket.getAddress().getHostAddress();
+                log.info("InetSocketAddress {} ",clientIP);
+            }
+
             Channel channel = ctx.channel();
             QueryStringDecoder queryDecoder = new QueryStringDecoder(req.uri());
 
@@ -136,7 +142,7 @@ public class AuthorizeHandler extends ChannelInboundHandlerAdapter implements Di
 
     private boolean authorize(ChannelHandlerContext ctx, Channel channel, String origin, Map<String, List<String>> params, FullHttpRequest req)
             throws IOException {
-        Map<String, List<String>> headers = new HashMap<String, List<String>>(req.headers().names().size());
+        Map<String, List<String>> headers = new HashMap<>(req.headers().names().size());
         for (String name : req.headers().names()) {
             List<String> values = req.headers().getAll(name);
             headers.put(name, values);
