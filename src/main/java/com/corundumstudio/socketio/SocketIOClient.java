@@ -109,4 +109,9 @@ public interface SocketIOClient extends ClientOperations, Store {
      */
     Set<String> getAllRooms();
 
+    /**
+     *
+     */
+    String getClientIp();
+
 }

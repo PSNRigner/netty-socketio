@@ -106,14 +106,6 @@ public class AuthorizeHandler extends ChannelInboundHandlerAdapter implements Di
 
         if (msg instanceof FullHttpRequest) {
             FullHttpRequest req = (FullHttpRequest) msg;
-            String clientIP = req.headers().get("X-Forwarded-For");
-            log.info("远程地址 X-Forwarded-For {} ",clientIP);
-            if (clientIP == null) {
-                InetSocketAddress insocket = (InetSocketAddress) ctx.channel()
-                        .remoteAddress();
-                clientIP = insocket.getAddress().getHostAddress();
-                log.info("InetSocketAddress {} ",clientIP);
-            }
 
             Channel channel = ctx.channel();
             QueryStringDecoder queryDecoder = new QueryStringDecoder(req.uri());

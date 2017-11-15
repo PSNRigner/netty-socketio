@@ -120,14 +120,11 @@ public class ClientHead {
 
     public void schedulePingTimeout() {
         SchedulerKey key = new SchedulerKey(Type.PING_TIMEOUT, sessionId);
-        disconnectScheduler.schedule(key, new Runnable() {
-            @Override
-            public void run() {
-                ClientHead client = clientsBox.get(sessionId);
-                if (client != null) {
-                    client.onChannelDisconnect();
-                    log.debug("{} removed due to ping timeout", sessionId);
-                }
+        disconnectScheduler.schedule(key, () -> {
+            ClientHead client = clientsBox.get(sessionId);
+            if (client != null) {
+                client.onChannelDisconnect();
+                log.debug("{} removed due to ping timeout", sessionId);
             }
         }, configuration.getPingTimeout() + configuration.getPingInterval(), TimeUnit.MILLISECONDS);
     }

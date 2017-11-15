@@ -203,6 +203,11 @@ public class NamespaceClient implements SocketIOClient {
     }
 
     @Override
+    public String getClientIp() {
+        return baseClient.getHandshakeData().getHttpHeaders().get("X-Forwarded-For");
+    }
+
+    @Override
     public HandshakeData getHandshakeData() {
         return baseClient.getHandshakeData();
     }
