@@ -4,7 +4,7 @@
 
     <groupId>com.corundumstudio.socketio</groupId>
     <artifactId>netty-socketio</artifactId>
-    <version>1.7.14.h-SNAPSHOT</version>
+    <version>1.7.14.i-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <name>NettySocketIO</name>
     <description>Socket.IO server implemented on Java</description>
@@ -55,8 +55,8 @@
     <properties>
         <skipTests>true</skipTests>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <netty.version>4.1.18.Final</netty.version>
-        <spring.version>4.3.12.RELEASE</spring.version>
+        <netty.version>4.1.19.Final</netty.version>
+        <spring.version>5.0.2.RELEASE</spring.version>
     </properties>
 
     <profiles>
@@ -161,12 +161,12 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
-            <version>2.9.2</version>
+            <version>2.9.3</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.9.2</version>
+            <version>2.9.3</version>
         </dependency>
 
 
