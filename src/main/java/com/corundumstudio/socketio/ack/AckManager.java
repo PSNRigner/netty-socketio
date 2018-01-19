@@ -156,13 +156,10 @@ public class AckManager implements Disconnectable {
             return;
         }
         SchedulerKey key = new AckSchedulerKey(Type.ACK_TIMEOUT, sessionId, index);
-        scheduler.scheduleCallback(key, new Runnable() {
-            @Override
-            public void run() {
-                AckCallback<?> cb = removeCallback(sessionId, index);
-                if (cb != null) {
-                    cb.onTimeout();
-                }
+        scheduler.scheduleCallback(key, () -> {
+            AckCallback<?> cb = removeCallback(sessionId, index);
+            if (cb != null) {
+                cb.onTimeout();
             }
         }, callback.getTimeout(), TimeUnit.SECONDS);
     }

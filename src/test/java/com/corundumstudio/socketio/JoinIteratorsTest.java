@@ -30,13 +30,13 @@ public class JoinIteratorsTest {
     public void testIterator() {
         List<Integer> list1 = Arrays.asList(1, 2);
         List<Integer> list2 = Arrays.asList(3, 4);
-        CompositeIterable<Integer> iterators = new CompositeIterable<Integer>(list1, list2);
+        CompositeIterable<Integer> iterators = new CompositeIterable<>(list1, list2);
 
         // for nomemory test
-        for (Integer integer : iterators) {
+        for (Integer ignored : iterators) {
         }
 
-        List<Integer> mainList = new ArrayList<Integer>();
+        List<Integer> mainList = new ArrayList<>();
         for (Integer integer : iterators) {
             mainList.add(integer);
         }
