@@ -55,8 +55,8 @@
     <properties>
         <skipTests>true</skipTests>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <netty.version>4.1.20.Final</netty.version>
-        <spring.version>5.0.2.RELEASE</spring.version>
+        <netty.version>4.1.21.Final</netty.version>
+        <spring.version>5.0.3.RELEASE</spring.version>
     </properties>
 
     <profiles>
