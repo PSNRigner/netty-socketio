@@ -86,7 +86,7 @@ public class HandshakeData implements Serializable {
      */
     @Deprecated
     public Map<String, List<String>> getHeaders() {
-        Map<String, List<String>> result = new HashMap<>(headers.names().size());
+        Map<String, List<String>> result = new HashMap<String, List<String>>(headers.names().size());
         for (String name : headers.names()) {
             List<String> values = headers.getAll(name);
             result.put(name, values);
