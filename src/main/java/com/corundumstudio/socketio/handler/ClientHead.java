@@ -55,11 +55,11 @@ public class ClientHead {
 
     private static final Logger log = LoggerFactory.getLogger(ClientHead.class);
 
-    public static final AttributeKey<ClientHead> CLIENT = AttributeKey.<ClientHead>valueOf("client");
+    public static final AttributeKey<ClientHead> CLIENT = AttributeKey.valueOf("client");
 
     private final AtomicBoolean disconnected = new AtomicBoolean();
     private final Map<Namespace, NamespaceClient> namespaceClients = PlatformDependent.newConcurrentHashMap();
-    private final Map<Transport, TransportState> channels = new HashMap<Transport, TransportState>(2);
+    private final Map<Transport, TransportState> channels = new HashMap<>(2);
     private final HandshakeData handshakeData;
     private final UUID sessionId;
 
@@ -120,14 +120,11 @@ public class ClientHead {
 
     public void schedulePingTimeout() {
         SchedulerKey key = new SchedulerKey(Type.PING_TIMEOUT, sessionId);
-        disconnectScheduler.schedule(key, new Runnable() {
-            @Override
-            public void run() {
-                ClientHead client = clientsBox.get(sessionId);
-                if (client != null) {
-                    client.disconnect();
-                    log.debug("{} removed due to ping timeout", sessionId);
-                }
+        disconnectScheduler.schedule(key, () -> {
+            ClientHead client = clientsBox.get(sessionId);
+            if (client != null) {
+                client.disconnect();
+                log.debug("{} removed due to ping timeout", sessionId);
             }
         }, configuration.getPingTimeout() + configuration.getPingInterval(), TimeUnit.MILLISECONDS);
     }
