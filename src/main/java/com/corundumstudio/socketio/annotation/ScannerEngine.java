@@ -96,9 +96,10 @@ public class ScannerEngine {
     }
 
     private void makeAccessible(Method method) {
-        if ((!Modifier.isPublic(method.getModifiers()) || !Modifier.isPublic(method.getDeclaringClass().getModifiers()))
-                && !method.isAccessible()) {
-            method.setAccessible(true);
+        if (!Modifier.isPublic(method.getModifiers()) || !Modifier.isPublic(method.getDeclaringClass().getModifiers())) {
+            if (!method.isAccessible()) {
+                method.setAccessible(true);
+            }
         }
     }
 
