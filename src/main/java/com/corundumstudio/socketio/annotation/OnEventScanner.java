@@ -25,7 +25,6 @@ import com.corundumstudio.socketio.AckRequest;
 import com.corundumstudio.socketio.MultiTypeArgs;
 import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.handler.SocketIOException;
-import com.corundumstudio.socketio.listener.DataListener;
 import com.corundumstudio.socketio.listener.MultiTypeEventListener;
 import com.corundumstudio.socketio.namespace.Namespace;
 
@@ -84,27 +83,24 @@ public class OnEventScanner implements AnnotationScanner {
                 objectType = method.getParameterTypes()[dataIndexes.iterator().next()];
             }
 
-            namespace.addEventListener(annotation.value(), objectType, new DataListener<Object>() {
-                @Override
-                public void onData(SocketIOClient client, Object data, AckRequest ackSender) {
-                    try {
-                        Object[] args = new Object[method.getParameterTypes().length];
-                        if (socketIOClientIndex != -1) {
-                            args[socketIOClientIndex] = client;
-                        }
-                        if (ackRequestIndex != -1) {
-                            args[ackRequestIndex] = ackSender;
-                        }
-                        if (!dataIndexes.isEmpty()) {
-                            int dataIndex = dataIndexes.iterator().next();
-                            args[dataIndex] = data;
-                        }
-                        method.invoke(object, args);
-                    } catch (InvocationTargetException e) {
-                        throw new SocketIOException(e.getCause());
-                    } catch (Exception e) {
-                        throw new SocketIOException(e);
+            namespace.addEventListener(annotation.value(), objectType, (client, data, ackSender) -> {
+                try {
+                    Object[] args = new Object[method.getParameterTypes().length];
+                    if (socketIOClientIndex != -1) {
+                        args[socketIOClientIndex] = client;
                     }
+                    if (ackRequestIndex != -1) {
+                        args[ackRequestIndex] = ackSender;
+                    }
+                    if (!dataIndexes.isEmpty()) {
+                        int dataIndex = dataIndexes.iterator().next();
+                        args[dataIndex] = data;
+                    }
+                    method.invoke(object, args);
+                } catch (InvocationTargetException e) {
+                    throw new SocketIOException(e.getCause());
+                } catch (Exception e) {
+                    throw new SocketIOException(e);
                 }
             });
         }

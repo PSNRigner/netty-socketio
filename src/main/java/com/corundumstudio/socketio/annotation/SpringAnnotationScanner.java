@@ -16,7 +16,6 @@
 package com.corundumstudio.socketio.annotation;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -25,11 +24,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
-import org.springframework.util.ReflectionUtils;
-import org.springframework.util.ReflectionUtils.MethodCallback;
-import org.springframework.util.ReflectionUtils.MethodFilter;
 
 import com.corundumstudio.socketio.SocketIOServer;
+
+import static org.springframework.util.ReflectionUtils.*;
 
 public class SpringAnnotationScanner implements BeanPostProcessor {
 
@@ -60,25 +58,16 @@ public class SpringAnnotationScanner implements BeanPostProcessor {
     @Override
     public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
         final AtomicBoolean add = new AtomicBoolean();
-        ReflectionUtils.doWithMethods(bean.getClass(),
-                new MethodCallback() {
-            @Override
-            public void doWith(Method method) throws IllegalArgumentException,
-            IllegalAccessException {
-                add.set(true);
-            }
-        },
-        new MethodFilter() {
-            @Override
-            public boolean matches(Method method) {
-                for (Class<? extends Annotation> annotationClass : annotations) {
-                    if (method.isAnnotationPresent(annotationClass)) {
-                        return true;
+        doWithMethods(bean.getClass(),
+                method -> add.set(true),
+                method -> {
+                    for (Class<? extends Annotation> annotationClass : annotations) {
+                        if (method.isAnnotationPresent(annotationClass)) {
+                            return true;
+                        }
                     }
-                }
-                return false;
-            }
-        });
+                    return false;
+                });
 
         if (add.get()) {
             originalBeanClass = bean.getClass();

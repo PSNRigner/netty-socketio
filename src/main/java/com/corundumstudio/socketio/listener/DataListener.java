@@ -17,7 +17,7 @@ package com.corundumstudio.socketio.listener;
 
 import com.corundumstudio.socketio.AckRequest;
 import com.corundumstudio.socketio.SocketIOClient;
-
+@FunctionalInterface
 public interface DataListener<T> {
 
     /**

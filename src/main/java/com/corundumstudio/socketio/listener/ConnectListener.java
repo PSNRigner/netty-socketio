@@ -16,7 +16,7 @@
 package com.corundumstudio.socketio.listener;
 
 import com.corundumstudio.socketio.SocketIOClient;
-
+@FunctionalInterface
 public interface ConnectListener {
 
     void onConnect(SocketIOClient client);

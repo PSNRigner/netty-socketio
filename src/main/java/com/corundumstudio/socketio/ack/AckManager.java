@@ -107,7 +107,7 @@ public class AckManager implements Disconnectable {
             return;
         }
         if (callback instanceof MultiTypeAckCallback) {
-            callback.onSuccess(new MultiTypeArgs(packet.<List<Object>>getData()));
+            callback.onSuccess(new MultiTypeArgs(packet.getData()));
         } else {
             Object param = null;
             List<Object> args = packet.getData();

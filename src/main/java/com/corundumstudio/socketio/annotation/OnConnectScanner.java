@@ -21,7 +21,6 @@ import java.lang.reflect.Method;
 
 import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.handler.SocketIOException;
-import com.corundumstudio.socketio.listener.ConnectListener;
 import com.corundumstudio.socketio.namespace.Namespace;
 
 public class OnConnectScanner implements AnnotationScanner  {
@@ -33,16 +32,13 @@ public class OnConnectScanner implements AnnotationScanner  {
 
     @Override
     public void addListener(Namespace namespace, final Object object, final Method method, Annotation annotation) {
-        namespace.addConnectListener(new ConnectListener() {
-            @Override
-            public void onConnect(SocketIOClient client) {
-                try {
-                    method.invoke(object, client);
-                } catch (InvocationTargetException e) {
-                    throw new SocketIOException(e.getCause());
-                } catch (Exception e) {
-                    throw new SocketIOException(e);
-                }
+        namespace.addConnectListener(client -> {
+            try {
+                method.invoke(object, client);
+            } catch (InvocationTargetException e) {
+                throw new SocketIOException(e.getCause());
+            } catch (Exception e) {
+                throw new SocketIOException(e);
             }
         });
     }

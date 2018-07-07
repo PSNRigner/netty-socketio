@@ -56,9 +56,9 @@ public class Namespace implements SocketIONamespace {
 
     private final ScannerEngine engine = new ScannerEngine();
     private final ConcurrentMap<String, EventEntry<?>> eventListeners = PlatformDependent.newConcurrentHashMap();
-    private final Queue<ConnectListener> connectListeners = new ConcurrentLinkedQueue<ConnectListener>();
-    private final Queue<DisconnectListener> disconnectListeners = new ConcurrentLinkedQueue<DisconnectListener>();
-    private final Queue<PingListener> pingListeners = new ConcurrentLinkedQueue<PingListener>();
+    private final Queue<ConnectListener> connectListeners = new ConcurrentLinkedQueue<>();
+    private final Queue<DisconnectListener> disconnectListeners = new ConcurrentLinkedQueue<>();
+    private final Queue<PingListener> pingListeners = new ConcurrentLinkedQueue<>();
 
     private final Map<UUID, SocketIOClient> allClients = PlatformDependent.newConcurrentHashMap();
     private final ConcurrentMap<String, Set<UUID>> roomClients = PlatformDependent.newConcurrentHashMap();
@@ -204,9 +204,7 @@ public class Namespace implements SocketIONamespace {
         storeFactory.pubSubStore().publish(PubSubType.JOIN, new JoinLeaveMessage(client.getSessionId(), getName(), getName()));
 
         try {
-            for (ConnectListener listener : connectListeners) {
-                listener.onConnect(client);
-            }
+            connectListeners.forEach(listener -> listener.onConnect(client));
         } catch (Exception e) {
             exceptionListener.onConnectException(e, client);
         }
@@ -219,9 +217,7 @@ public class Namespace implements SocketIONamespace {
 
     public void onPing(SocketIOClient client) {
         try {
-            for (PingListener listener : pingListeners) {
-                listener.onPing(client);
-            }
+            pingListeners.forEach(listener -> listener.onPing(client));
         } catch (Exception e) {
             exceptionListener.onPingException(e, client);
         }

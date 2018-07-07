@@ -238,7 +238,7 @@
             </execution>
           </executions>
           <configuration>
-            <linkXref>true</linkXref>
+            <!--<linkXref>true</linkXref>-->
             <minimumTokens>100</minimumTokens>
             <targetJdk>1.6</targetJdk>
             <verbose>true</verbose>
@@ -271,7 +271,7 @@
            <source>1.8</source>
            <target>1.8</target>
            <optimize>true</optimize>
-           <showDeprecations>true</showDeprecations>
+           <!--<showDeprecations>true</showDeprecations>-->
          </configuration>
        </plugin>
 

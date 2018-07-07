@@ -49,12 +49,12 @@ public class NamespacesHub {
     }
 
     public Iterable<SocketIOClient> getRoomClients(String room) {
-        List<Iterable<SocketIOClient>> allClients = new ArrayList<Iterable<SocketIOClient>>();
+        List<Iterable<SocketIOClient>> allClients = new ArrayList<>();
         for (SocketIONamespace namespace : namespaces.values()) {
             Iterable<SocketIOClient> clients = ((Namespace)namespace).getRoomClients(room);
             allClients.add(clients);
         }
-        return new CompositeIterable<SocketIOClient>(allClients);
+        return new CompositeIterable<>(allClients);
     }
 
     public Namespace get(String name) {
