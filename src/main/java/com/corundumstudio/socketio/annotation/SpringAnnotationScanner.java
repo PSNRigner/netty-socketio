@@ -26,7 +26,6 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
 import com.corundumstudio.socketio.SocketIOServer;
-
 import static org.springframework.util.ReflectionUtils.*;
 
 public class SpringAnnotationScanner implements BeanPostProcessor {
@@ -60,14 +59,7 @@ public class SpringAnnotationScanner implements BeanPostProcessor {
         final AtomicBoolean add = new AtomicBoolean();
         doWithMethods(bean.getClass(),
                 method -> add.set(true),
-                method -> {
-                    for (Class<? extends Annotation> annotationClass : annotations) {
-                        if (method.isAnnotationPresent(annotationClass)) {
-                            return true;
-                        }
-                    }
-                    return false;
-                });
+                method -> annotations.stream().anyMatch(method::isAnnotationPresent));
 
         if (add.get()) {
             originalBeanClass = bean.getClass();
