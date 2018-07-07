@@ -48,7 +48,7 @@
 
     <distributionManagement>
         <repository>
-            <id>safe_releases</id>
+            <id>java</id>
             <name>safe_releases</name>
             <url>http://140.143.30.156:8081/repository/java/</url>
         </repository>
