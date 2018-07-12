@@ -15,26 +15,7 @@
  */
 package com.corundumstudio.socketio.handler;
 
-import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
-
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.corundumstudio.socketio.Configuration;
-import com.corundumstudio.socketio.Disconnectable;
-import com.corundumstudio.socketio.DisconnectableHub;
-import com.corundumstudio.socketio.HandshakeData;
-import com.corundumstudio.socketio.SocketIOClient;
-import com.corundumstudio.socketio.Transport;
+import com.corundumstudio.socketio.*;
 import com.corundumstudio.socketio.ack.AckManager;
 import com.corundumstudio.socketio.messages.HttpErrorMessage;
 import com.corundumstudio.socketio.namespace.Namespace;
@@ -48,21 +29,22 @@ import com.corundumstudio.socketio.scheduler.SchedulerKey.Type;
 import com.corundumstudio.socketio.store.StoreFactory;
 import com.corundumstudio.socketio.store.pubsub.ConnectMessage;
 import com.corundumstudio.socketio.store.pubsub.PubSubType;
-
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.handler.codec.http.DefaultHttpResponse;
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.handler.codec.http.HttpResponse;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.codec.http.QueryStringDecoder;
+import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.net.InetSocketAddress;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+
+import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 @Sharable
 public class AuthorizeHandler extends ChannelInboundHandlerAdapter implements Disconnectable {
@@ -79,8 +61,8 @@ public class AuthorizeHandler extends ChannelInboundHandlerAdapter implements Di
     private final AckManager ackManager;
     private final ClientsBox clientsBox;
 
-    public AuthorizeHandler(String connectPath, CancelableScheduler scheduler, Configuration configuration, NamespacesHub namespacesHub, StoreFactory storeFactory,
-            DisconnectableHub disconnectable, AckManager ackManager, ClientsBox clientsBox) {
+    public AuthorizeHandler(final String connectPath, final CancelableScheduler scheduler, final Configuration configuration, final NamespacesHub namespacesHub, final StoreFactory storeFactory,
+                            final DisconnectableHub disconnectable, final AckManager ackManager, final ClientsBox clientsBox) {
         super();
         this.connectPath = connectPath;
         this.configuration = configuration;
@@ -94,38 +76,38 @@ public class AuthorizeHandler extends ChannelInboundHandlerAdapter implements Di
 
     @Override
     public void channelActive(final ChannelHandlerContext ctx) throws Exception {
-        SchedulerKey key = new SchedulerKey(Type.PING_TIMEOUT, ctx.channel());
-        disconnectScheduler.schedule(key, () -> {
+        final SchedulerKey key = new SchedulerKey(Type.PING_TIMEOUT, ctx.channel());
+        this.disconnectScheduler.schedule(key, () -> {
             ctx.channel().close();
             log.debug("Client with ip {} opened channel but doesn't send any data! Channel closed!", ctx.channel().remoteAddress());
-        }, configuration.getFirstDataTimeout(), TimeUnit.MILLISECONDS);
+        }, this.configuration.getFirstDataTimeout(), TimeUnit.MILLISECONDS);
         super.channelActive(ctx);
     }
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        SchedulerKey key = new SchedulerKey(Type.PING_TIMEOUT, ctx.channel());
-        disconnectScheduler.cancel(key);
+    public void channelRead(final ChannelHandlerContext ctx, final Object msg) throws Exception {
+        final SchedulerKey key = new SchedulerKey(Type.PING_TIMEOUT, ctx.channel());
+        this.disconnectScheduler.cancel(key);
 
         if (msg instanceof FullHttpRequest) {
-            FullHttpRequest req = (FullHttpRequest) msg;
+            final FullHttpRequest req = (FullHttpRequest) msg;
 
-            Channel channel = ctx.channel();
-            QueryStringDecoder queryDecoder = new QueryStringDecoder(req.uri());
+            final Channel channel = ctx.channel();
+            final QueryStringDecoder queryDecoder = new QueryStringDecoder(req.uri());
 
-            if (!configuration.isAllowCustomRequests()
-                    && !queryDecoder.path().startsWith(connectPath)) {
-                HttpResponse res = new DefaultHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST);
+            if (!this.configuration.isAllowCustomRequests()
+                    && !queryDecoder.path().startsWith(this.connectPath)) {
+                final HttpResponse res = new DefaultHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST);
                 channel.writeAndFlush(res).addListener(ChannelFutureListener.CLOSE);
                 req.release();
                 return;
             }
 
-            List<String> sid = queryDecoder.parameters().get("sid");
-            if (queryDecoder.path().equals(connectPath)
+            final List<String> sid = queryDecoder.parameters().get("sid");
+            if (queryDecoder.path().equals(this.connectPath)
                     && sid == null) {
-                String origin = req.headers().get(HttpHeaderNames.ORIGIN);
-                if (!authorize(ctx, channel, origin, queryDecoder.parameters(), req)) {
+                final String origin = req.headers().get(HttpHeaderNames.ORIGIN);
+                if (!this.authorize(ctx, channel, origin, queryDecoder.parameters(), req)) {
                     req.release();
                     return;
                 }
@@ -135,48 +117,47 @@ public class AuthorizeHandler extends ChannelInboundHandlerAdapter implements Di
         ctx.fireChannelRead(msg);
     }
 
-    private boolean authorize(ChannelHandlerContext ctx, Channel channel, String origin, Map<String, List<String>> params, FullHttpRequest req)
-            throws IOException {
-        Map<String, List<String>> headers = new HashMap<>(req.headers().names().size());
-        for (String name : req.headers().names()) {
-            List<String> values = req.headers().getAll(name);
+    private boolean authorize(final ChannelHandlerContext ctx, final Channel channel, final String origin, final Map<String, List<String>> params, final FullHttpRequest req) {
+        final Map<String, List<String>> headers = new HashMap<>(req.headers().names().size());
+        for (final String name : req.headers().names()) {
+            final List<String> values = req.headers().getAll(name);
             headers.put(name, values);
         }
 
-        HandshakeData data = new HandshakeData(req.headers(), params,
+        final HandshakeData data = new HandshakeData(req.headers(), params,
                                                 (InetSocketAddress)channel.remoteAddress(),
                                                 (InetSocketAddress)channel.localAddress(),
                                                     req.uri(), origin != null && !origin.equalsIgnoreCase("null"));
 
         boolean result = false;
         try {
-            result = configuration.getAuthorizationListener().isAuthorized(data);
-        } catch (Exception e) {
+            result = this.configuration.getAuthorizationListener().isAuthorized(data);
+        } catch (final Exception e) {
             log.error("Authorization error", e);
         }
 
         if (!result) {
-            HttpResponse res = new DefaultHttpResponse(HTTP_1_1, HttpResponseStatus.UNAUTHORIZED);
+            final HttpResponse res = new DefaultHttpResponse(HTTP_1_1, HttpResponseStatus.UNAUTHORIZED);
             channel.writeAndFlush(res)
                     .addListener(ChannelFutureListener.CLOSE);
             log.debug("Handshake unauthorized, query params: {} headers: {}", params, headers);
             return false;
         }
 
-        UUID sessionId = this.generateOrGetSessionIdFromRequest(req.headers());
+        final UUID sessionId = this.generateOrGetSessionIdFromRequest(req.headers());
 
-        List<String> transportValue = params.get("transport");
+        final List<String> transportValue = params.get("transport");
         if (transportValue == null) {
             log.error("Got no transports for request {}", req.uri());
 
-            HttpResponse res = new DefaultHttpResponse(HTTP_1_1, HttpResponseStatus.UNAUTHORIZED);
+            final HttpResponse res = new DefaultHttpResponse(HTTP_1_1, HttpResponseStatus.UNAUTHORIZED);
             channel.writeAndFlush(res).addListener(ChannelFutureListener.CLOSE);
             return false;
         }
 
-        Transport transport = Transport.byName(transportValue.get(0));
-        if (!configuration.getTransports().contains(transport)) {
-            Map<String, Object> errorData = new HashMap<String, Object>();
+        final Transport transport = Transport.byName(transportValue.get(0));
+        if (!this.configuration.getTransports().contains(transport)) {
+            final Map<String, Object> errorData = new HashMap<>();
             errorData.put("code", 0);
             errorData.put("message", "Transport unknown");
 
@@ -185,18 +166,18 @@ public class AuthorizeHandler extends ChannelInboundHandlerAdapter implements Di
             return false;
         }
 
-        ClientHead client = new ClientHead(sessionId, ackManager, disconnectable, storeFactory, data, clientsBox, transport, disconnectScheduler, configuration);
+        final ClientHead client = new ClientHead(sessionId, this.ackManager, this.disconnectable, this.storeFactory, data, this.clientsBox, transport, this.disconnectScheduler, this.configuration);
         channel.attr(ClientHead.CLIENT).set(client);
-        clientsBox.addClient(client);
+        this.clientsBox.addClient(client);
 
         String[] transports = {};
-        if (configuration.getTransports().contains(Transport.WEBSOCKET)) {
+        if (this.configuration.getTransports().contains(Transport.WEBSOCKET)) {
             transports = new String[] {"websocket"};
         }
 
-        AuthPacket authPacket = new AuthPacket(sessionId, transports, configuration.getPingInterval(),
-                                                                            configuration.getPingTimeout());
-        Packet packet = new Packet(PacketType.OPEN);
+        final AuthPacket authPacket = new AuthPacket(sessionId, transports, this.configuration.getPingInterval(),
+                this.configuration.getPingTimeout());
+        final Packet packet = new Packet(PacketType.OPEN);
         packet.setData(authPacket);
         client.send(packet);
 
@@ -210,24 +191,24 @@ public class AuthorizeHandler extends ChannelInboundHandlerAdapter implements Di
         in the "io" cookie.  Failures to parse will cause a logging warning to be generated and a
         random uuid to be generated instead (same as not passing a cookie in the first place).
     */
-    private UUID generateOrGetSessionIdFromRequest(HttpHeaders headers) {
-        List<String> values = headers.getAll("io");
+    private UUID generateOrGetSessionIdFromRequest(final HttpHeaders headers) {
+        final List<String> values = headers.getAll("io");
         if (values.size() == 1) {
             try {
                 return UUID.fromString(values.get(0));
-            } catch ( IllegalArgumentException iaex ) {
+            } catch (final IllegalArgumentException iaex) {
                 log.warn("Malformed UUID received for session! io=" + values.get(0));
             }
         }
-        
-        for (String cookieHeader: headers.getAll(HttpHeaderNames.COOKIE)) {
-            Set<Cookie> cookies = ServerCookieDecoder.LAX.decode(cookieHeader);
 
-            for (Cookie cookie : cookies) {
+        for (final String cookieHeader : headers.getAll(HttpHeaderNames.COOKIE)) {
+            final Set<Cookie> cookies = ServerCookieDecoder.LAX.decode(cookieHeader);
+
+            for (final Cookie cookie : cookies) {
                 if (cookie.name().equals("io")) {
                     try {
                         return UUID.fromString(cookie.value());
-                    } catch ( IllegalArgumentException iaex ) {
+                    } catch (final IllegalArgumentException iaex) {
                         log.warn("Malformed UUID received for session! io=" + cookie.value());
                     }
                 }
@@ -237,29 +218,29 @@ public class AuthorizeHandler extends ChannelInboundHandlerAdapter implements Di
         return UUID.randomUUID();
     }
 
-    public void connect(UUID sessionId) {
-        SchedulerKey key = new SchedulerKey(Type.PING_TIMEOUT, sessionId);
-        disconnectScheduler.cancel(key);
+    public void connect(final UUID sessionId) {
+        final SchedulerKey key = new SchedulerKey(Type.PING_TIMEOUT, sessionId);
+        this.disconnectScheduler.cancel(key);
     }
 
-    public void connect(ClientHead client) {
-        Namespace ns = namespacesHub.get(Namespace.DEFAULT_NAME);
+    public void connect(final ClientHead client) {
+        final Namespace ns = this.namespacesHub.get(Namespace.DEFAULT_NAME);
 
         if (!client.getNamespaces().contains(ns)) {
-            Packet packet = new Packet(PacketType.MESSAGE);
+            final Packet packet = new Packet(PacketType.MESSAGE);
             packet.setSubType(PacketType.CONNECT);
             client.send(packet);
 
-            configuration.getStoreFactory().pubSubStore().publish(PubSubType.CONNECT, new ConnectMessage(client.getSessionId()));
+            this.configuration.getStoreFactory().pubSubStore().publish(PubSubType.CONNECT, new ConnectMessage(client.getSessionId()));
 
-            SocketIOClient nsClient = client.addNamespaceClient(ns);
+            final SocketIOClient nsClient = client.addNamespaceClient(ns);
             ns.onConnect(nsClient);
         }
     }
 
     @Override
-    public void onDisconnect(ClientHead client) {
-        clientsBox.removeClient(client.getSessionId());
+    public void onDisconnect(final ClientHead client) {
+        this.clientsBox.removeClient(client.getSessionId());
     }
 
 }

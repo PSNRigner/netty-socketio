@@ -41,63 +41,60 @@ public class HashedWheelTimeoutScheduler implements CancelableScheduler {
     private volatile ChannelHandlerContext ctx;
     
     public HashedWheelTimeoutScheduler() {
-        executorService = new HashedWheelTimer();
+        this.executorService = new HashedWheelTimer();
     }
-    
-    public HashedWheelTimeoutScheduler(ThreadFactory threadFactory) {
-        executorService = new HashedWheelTimer(threadFactory);
+
+    public HashedWheelTimeoutScheduler(final ThreadFactory threadFactory) {
+        this.executorService = new HashedWheelTimer(threadFactory);
     }
 
     @Override
-    public void update(ChannelHandlerContext ctx) {
+    public void update(final ChannelHandlerContext ctx) {
         this.ctx = ctx;
     }
 
     @Override
-    public void cancel(SchedulerKey key) {
-        Timeout timeout = scheduledFutures.remove(key);
+    public void cancel(final SchedulerKey key) {
+        final Timeout timeout = this.scheduledFutures.remove(key);
         if (timeout != null) {
             timeout.cancel();
         }
     }
 
     @Override
-    public void schedule(final Runnable runnable, long delay, TimeUnit unit) {
-        executorService.newTimeout(timeout -> runnable.run(), delay, unit);
+    public void schedule(final Runnable runnable, final long delay, final TimeUnit unit) {
+        this.executorService.newTimeout(timeout -> runnable.run(), delay, unit);
     }
 
     @Override
-    public void scheduleCallback(final SchedulerKey key, final Runnable runnable, long delay, TimeUnit unit) {
-        Timeout timeout = executorService.newTimeout(timeout1 -> ctx.executor().execute(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    runnable.run();
-                } finally {
-                    scheduledFutures.remove(key);
-                }
-            }
-        }), delay, unit);
-
-        replaceScheduledFuture(key, timeout);
-    }
-
-    @Override
-    public void schedule(final SchedulerKey key, final Runnable runnable, long delay, TimeUnit unit) {
-        Timeout timeout = executorService.newTimeout(timeout1 -> {
+    public void scheduleCallback(final SchedulerKey key, final Runnable runnable, final long delay, final TimeUnit unit) {
+        final Timeout timeout = this.executorService.newTimeout(timeout1 -> this.ctx.executor().execute(() -> {
             try {
                 runnable.run();
             } finally {
-                scheduledFutures.remove(key);
+                this.scheduledFutures.remove(key);
+            }
+        }), delay, unit);
+
+        this.replaceScheduledFuture(key, timeout);
+    }
+
+    @Override
+    public void schedule(final SchedulerKey key, final Runnable runnable, final long delay, final TimeUnit unit) {
+        final Timeout timeout = this.executorService.newTimeout(timeout1 -> {
+            try {
+                runnable.run();
+            } finally {
+                this.scheduledFutures.remove(key);
             }
         }, delay, unit);
 
-        replaceScheduledFuture(key, timeout);
+        this.replaceScheduledFuture(key, timeout);
     }
 
     @Override
     public void shutdown() {
-        executorService.stop();
+        this.executorService.stop();
     }
 
     private void replaceScheduledFuture(final SchedulerKey key, final Timeout newTimeout) {
@@ -106,9 +103,9 @@ public class HashedWheelTimeoutScheduler implements CancelableScheduler {
         if (newTimeout.isExpired()) {
             // no need to put already expired timeout to scheduledFutures map.
             // simply remove old timeout
-            oldTimeout = scheduledFutures.remove(key);
+            oldTimeout = this.scheduledFutures.remove(key);
         } else {
-            oldTimeout = scheduledFutures.put(key, newTimeout);
+            oldTimeout = this.scheduledFutures.put(key, newTimeout);
         }
 
         // if there was old timeout, cancel it

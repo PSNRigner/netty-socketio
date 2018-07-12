@@ -15,14 +15,14 @@
  */
 package com.corundumstudio.socketio.scheduler;
 
-import java.util.Map;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timeout;
 import io.netty.util.internal.PlatformDependent;
+
+import java.util.Map;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 public class HashedWheelScheduler implements CancelableScheduler {
 
@@ -30,69 +30,66 @@ public class HashedWheelScheduler implements CancelableScheduler {
     private final HashedWheelTimer executorService;
     
     public HashedWheelScheduler() {
-        executorService = new HashedWheelTimer();
+        this.executorService = new HashedWheelTimer();
     }
-    
-    public HashedWheelScheduler(ThreadFactory threadFactory) {
-        executorService = new HashedWheelTimer(threadFactory);
+
+    public HashedWheelScheduler(final ThreadFactory threadFactory) {
+        this.executorService = new HashedWheelTimer(threadFactory);
     }
 
     private volatile ChannelHandlerContext ctx;
 
     @Override
-    public void update(ChannelHandlerContext ctx) {
+    public void update(final ChannelHandlerContext ctx) {
         this.ctx = ctx;
     }
 
     @Override
-    public void cancel(SchedulerKey key) {
-        Timeout timeout = scheduledFutures.remove(key);
+    public void cancel(final SchedulerKey key) {
+        final Timeout timeout = this.scheduledFutures.remove(key);
         if (timeout != null) {
             timeout.cancel();
         }
     }
 
     @Override
-    public void schedule(final Runnable runnable, long delay, TimeUnit unit) {
-        executorService.newTimeout(timeout -> runnable.run(), delay, unit);
+    public void schedule(final Runnable runnable, final long delay, final TimeUnit unit) {
+        this.executorService.newTimeout(timeout -> runnable.run(), delay, unit);
     }
 
     @Override
-    public void scheduleCallback(final SchedulerKey key, final Runnable runnable, long delay, TimeUnit unit) {
-        Timeout timeout = executorService.newTimeout(timeout1 -> ctx.executor().execute(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    runnable.run();
-                } finally {
-                    scheduledFutures.remove(key);
-                }
+    public void scheduleCallback(final SchedulerKey key, final Runnable runnable, final long delay, final TimeUnit unit) {
+        final Timeout timeout = this.executorService.newTimeout(timeout1 -> this.ctx.executor().execute(() -> {
+            try {
+                runnable.run();
+            } finally {
+                this.scheduledFutures.remove(key);
             }
         }), delay, unit);
 
         if (!timeout.isExpired()) {
-            scheduledFutures.put(key, timeout);
+            this.scheduledFutures.put(key, timeout);
         }
     }
 
     @Override
-    public void schedule(final SchedulerKey key, final Runnable runnable, long delay, TimeUnit unit) {
-        Timeout timeout = executorService.newTimeout(timeout1 -> {
+    public void schedule(final SchedulerKey key, final Runnable runnable, final long delay, final TimeUnit unit) {
+        final Timeout timeout = this.executorService.newTimeout(timeout1 -> {
             try {
                 runnable.run();
             } finally {
-                scheduledFutures.remove(key);
+                this.scheduledFutures.remove(key);
             }
         }, delay, unit);
 
         if (!timeout.isExpired()) {
-            scheduledFutures.put(key, timeout);
+            this.scheduledFutures.put(key, timeout);
         }
     }
 
     @Override
     public void shutdown() {
-        executorService.stop();
+        this.executorService.stop();
     }
 
 }

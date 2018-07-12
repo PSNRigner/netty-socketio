@@ -15,18 +15,16 @@
  */
 package com.corundumstudio.socketio.annotation;
 
+import com.corundumstudio.socketio.AckRequest;
+import com.corundumstudio.socketio.SocketIOClient;
+import com.corundumstudio.socketio.handler.SocketIOException;
+import com.corundumstudio.socketio.namespace.Namespace;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.corundumstudio.socketio.AckRequest;
-import com.corundumstudio.socketio.MultiTypeArgs;
-import com.corundumstudio.socketio.SocketIOClient;
-import com.corundumstudio.socketio.handler.SocketIOException;
-import com.corundumstudio.socketio.listener.MultiTypeEventListener;
-import com.corundumstudio.socketio.namespace.Namespace;
 
 public class OnEventScanner implements AnnotationScanner {
 
@@ -36,45 +34,42 @@ public class OnEventScanner implements AnnotationScanner {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public void addListener(Namespace namespace, final Object object, final Method method, Annotation annot) {
-        OnEvent annotation = (OnEvent) annot;
-        if (annotation.value() == null || annotation.value().trim().length() == 0) {
+    public void addListener(final Namespace namespace, final Object object, final Method method, final Annotation annot) {
+        final OnEvent annotation = (OnEvent) annot;
+        annotation.value();
+        if (annotation.value().trim().length() == 0) {
             throw new IllegalArgumentException("OnEvent \"value\" parameter is required");
         }
-        final int socketIOClientIndex = paramIndex(method, SocketIOClient.class);
-        final int ackRequestIndex = paramIndex(method, AckRequest.class);
-        final List<Integer> dataIndexes = dataIndexes(method);
+        final int socketIOClientIndex = this.paramIndex(method, SocketIOClient.class);
+        final int ackRequestIndex = this.paramIndex(method, AckRequest.class);
+        final List<Integer> dataIndexes = this.dataIndexes(method);
 
         if (dataIndexes.size() > 1) {
-            List<Class<?>> classes = new ArrayList<Class<?>>();
-            for (int index : dataIndexes) {
-                Class<?> param = method.getParameterTypes()[index];
+            final List<Class<?>> classes = new ArrayList<>();
+            for (final int index : dataIndexes) {
+                final Class<?> param = method.getParameterTypes()[index];
                 classes.add(param);
             }
 
-            namespace.addMultiTypeEventListener(annotation.value(), new MultiTypeEventListener() {
-                @Override
-                public void onData(SocketIOClient client, MultiTypeArgs data, AckRequest ackSender) {
-                    try {
-                        Object[] args = new Object[method.getParameterTypes().length];
-                        if (socketIOClientIndex != -1) {
-                            args[socketIOClientIndex] = client;
-                        }
-                        if (ackRequestIndex != -1) {
-                            args[ackRequestIndex] = ackSender;
-                        }
-                        int i = 0;
-                        for (int index : dataIndexes) {
-                            args[index] = data.get(i);
-                            i++;
-                        }
-                        method.invoke(object, args);
-                    } catch (InvocationTargetException e) {
-                        throw new SocketIOException(e.getCause());
-                    } catch (Exception e) {
-                        throw new SocketIOException(e);
+            namespace.addMultiTypeEventListener(annotation.value(), (client, data, ackSender) -> {
+                try {
+                    final Object[] args = new Object[method.getParameterTypes().length];
+                    if (socketIOClientIndex != -1) {
+                        args[socketIOClientIndex] = client;
                     }
+                    if (ackRequestIndex != -1) {
+                        args[ackRequestIndex] = ackSender;
+                    }
+                    int i = 0;
+                    for (final int index : dataIndexes) {
+                        args[index] = data.get(i);
+                        i++;
+                    }
+                    method.invoke(object, args);
+                } catch (final InvocationTargetException e) {
+                    throw new SocketIOException(e.getCause());
+                } catch (final Exception e) {
+                    throw new SocketIOException(e);
                 }
             }, classes.toArray(new Class[classes.size()]));
         } else {
@@ -85,7 +80,7 @@ public class OnEventScanner implements AnnotationScanner {
 
             namespace.addEventListener(annotation.value(), objectType, (client, data, ackSender) -> {
                 try {
-                    Object[] args = new Object[method.getParameterTypes().length];
+                    final Object[] args = new Object[method.getParameterTypes().length];
                     if (socketIOClientIndex != -1) {
                         args[socketIOClientIndex] = client;
                     }
@@ -93,23 +88,23 @@ public class OnEventScanner implements AnnotationScanner {
                         args[ackRequestIndex] = ackSender;
                     }
                     if (!dataIndexes.isEmpty()) {
-                        int dataIndex = dataIndexes.iterator().next();
+                        final int dataIndex = dataIndexes.iterator().next();
                         args[dataIndex] = data;
                     }
                     method.invoke(object, args);
-                } catch (InvocationTargetException e) {
+                } catch (final InvocationTargetException e) {
                     throw new SocketIOException(e.getCause());
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     throw new SocketIOException(e);
                 }
             });
         }
     }
 
-    private List<Integer> dataIndexes(Method method) {
-        List<Integer> result = new ArrayList<Integer>();
+    private List<Integer> dataIndexes(final Method method) {
+        final List<Integer> result = new ArrayList<>();
         int index = 0;
-        for (Class<?> type : method.getParameterTypes()) {
+        for (final Class<?> type : method.getParameterTypes()) {
             if (!type.equals(AckRequest.class) && !type.equals(SocketIOClient.class)) {
                 result.add(index);
             }
@@ -118,9 +113,9 @@ public class OnEventScanner implements AnnotationScanner {
         return result;
     }
 
-    private int paramIndex(Method method, Class<?> clazz) {
+    private int paramIndex(final Method method, final Class<?> clazz) {
         int index = 0;
-        for (Class<?> type : method.getParameterTypes()) {
+        for (final Class<?> type : method.getParameterTypes()) {
             if (type.equals(clazz)) {
                 return index;
             }
@@ -130,11 +125,11 @@ public class OnEventScanner implements AnnotationScanner {
     }
 
     @Override
-    public void validate(Method method, Class<?> clazz) {
+    public void validate(final Method method, final Class<?> clazz) {
         int paramsCount = method.getParameterTypes().length;
-        final int socketIOClientIndex = paramIndex(method, SocketIOClient.class);
-        final int ackRequestIndex = paramIndex(method, AckRequest.class);
-        List<Integer> dataIndexes = dataIndexes(method);
+        final int socketIOClientIndex = this.paramIndex(method, SocketIOClient.class);
+        final int ackRequestIndex = this.paramIndex(method, AckRequest.class);
+        final List<Integer> dataIndexes = this.dataIndexes(method);
         paramsCount -= dataIndexes.size();
         if (socketIOClientIndex != -1) {
             paramsCount--;

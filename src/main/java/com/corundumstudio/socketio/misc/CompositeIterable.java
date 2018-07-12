@@ -27,60 +27,60 @@ public class CompositeIterable<T> implements Iterable<T>, Iterator<T> {
     private Iterator<Iterator<T>> listIterator;
     private Iterator<T> currentIterator;
 
-    public CompositeIterable(List<Iterable<T>> iterables) {
+    public CompositeIterable(final List<Iterable<T>> iterables) {
         this.iterablesList = iterables;
     }
 
-    public CompositeIterable(Iterable<T> ... iterables) {
+    public CompositeIterable(final Iterable<T>... iterables) {
         this.iterables = iterables;
     }
 
-    public CompositeIterable(CompositeIterable<T> iterable) {
+    public CompositeIterable(final CompositeIterable<T> iterable) {
         this.iterables = iterable.iterables;
         this.iterablesList = iterable.iterablesList;
     }
 
     @Override
     public Iterator<T> iterator() {
-        List<Iterator<T>> iterators = new ArrayList<Iterator<T>>();
-        if (iterables != null) {
-            for (Iterable<T> iterable : iterables) {
+        final List<Iterator<T>> iterators = new ArrayList<>();
+        if (this.iterables != null) {
+            for (final Iterable<T> iterable : this.iterables) {
                 iterators.add(iterable.iterator());
             }
         } else {
-            for (Iterable<T> iterable : iterablesList) {
+            for (final Iterable<T> iterable : this.iterablesList) {
                 iterators.add(iterable.iterator());
             }
         }
-        listIterator = iterators.iterator();
-        currentIterator = null;
+        this.listIterator = iterators.iterator();
+        this.currentIterator = null;
         return this;
     }
 
     @Override
     public boolean hasNext() {
-        if (currentIterator == null || !currentIterator.hasNext()) {
-            while (listIterator.hasNext()) {
-                Iterator<T> iterator = listIterator.next();
+        if (this.currentIterator == null || !this.currentIterator.hasNext()) {
+            while (this.listIterator.hasNext()) {
+                final Iterator<T> iterator = this.listIterator.next();
                 if (iterator.hasNext()) {
-                    currentIterator = iterator;
+                    this.currentIterator = iterator;
                     return true;
                 }
             }
             return false;
         }
-        return currentIterator.hasNext();
+        return this.currentIterator.hasNext();
     }
 
     @Override
     public T next() {
-        hasNext();
-        return currentIterator.next();
+        this.hasNext();
+        return this.currentIterator.next();
     }
 
     @Override
     public void remove() {
-        currentIterator.remove();
+        this.currentIterator.remove();
     }
 
 }

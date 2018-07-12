@@ -15,14 +15,13 @@
  */
 package com.corundumstudio.socketio.protocol;
 
+import com.corundumstudio.socketio.namespace.Namespace;
 import io.netty.buffer.ByteBuf;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import com.corundumstudio.socketio.namespace.Namespace;
 
 public class Packet implements Serializable {
 
@@ -42,24 +41,24 @@ public class Packet implements Serializable {
     protected Packet() {
     }
 
-    public Packet(PacketType type) {
+    public Packet(final PacketType type) {
         super();
         this.type = type;
     }
 
     public PacketType getSubType() {
-        return subType;
+        return this.subType;
     }
 
-    public void setSubType(PacketType subType) {
+    public void setSubType(final PacketType subType) {
         this.subType = subType;
     }
 
     public PacketType getType() {
-        return type;
+        return this.type;
     }
 
-    public void setData(Object data) {
+    public void setData(final Object data) {
         this.data = data;
     }
 
@@ -74,66 +73,68 @@ public class Packet implements Serializable {
      * </pre>
      */
     public <T> T getData() {
-        return (T)data;
+        return (T) this.data;
     }
 
-    public void setNsp(String endpoint) {
+    public void setNsp(final String endpoint) {
         this.nsp = endpoint;
     }
 
     public String getNsp() {
-        return nsp;
+        return this.nsp;
     }
 
     public String getName() {
-        return name;
+        return this.name;
     }
 
-    public void setName(String name) {
+    public void setName(final String name) {
         this.name = name;
     }
 
     public Long getAckId() {
-        return ackId;
+        return this.ackId;
     }
 
-    public void setAckId(Long ackId) {
+    public void setAckId(final Long ackId) {
         this.ackId = ackId;
     }
 
     public boolean isAckRequested() {
-        return getAckId() != null;
+        return this.getAckId() != null;
     }
 
-    public void initAttachments(int attachmentsCount) {
+    public void initAttachments(final int attachmentsCount) {
         this.attachmentsCount = attachmentsCount;
-        this.attachments = new ArrayList<ByteBuf>(attachmentsCount);
+        this.attachments = new ArrayList<>(attachmentsCount);
     }
-    public void addAttachment(ByteBuf attachment) {
-        if (this.attachments.size() < attachmentsCount) {
+
+    public void addAttachment(final ByteBuf attachment) {
+        if (this.attachments.size() < this.attachmentsCount) {
             this.attachments.add(attachment);
         }
     }
     public List<ByteBuf> getAttachments() {
-        return attachments;
+        return this.attachments;
     }
     public boolean hasAttachments() {
-        return attachmentsCount != 0;
+        return this.attachmentsCount != 0;
     }
     public boolean isAttachmentsLoaded() {
-        return this.attachments.size() == attachmentsCount;
+        return this.attachments.size() == this.attachmentsCount;
     }
 
     public ByteBuf getDataSource() {
-        return dataSource;
+        return this.dataSource;
     }
-    public void setDataSource(ByteBuf dataSource) {
+
+    public void setDataSource(final ByteBuf dataSource) {
         this.dataSource = dataSource;
     }
 
     @Override
     public String toString() {
-        return "Packet [type=" + type + ", ackId=" + ackId + "]";
+        return "Packet [type=" + this.type + ", ackId=" + this.ackId + "]";
     }
 
 }

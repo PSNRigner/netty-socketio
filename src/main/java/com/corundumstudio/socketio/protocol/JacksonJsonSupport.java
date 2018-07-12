@@ -15,22 +15,6 @@
  */
 package com.corundumstudio.socketio.protocol;
 
-import io.netty.buffer.ByteBufInputStream;
-import io.netty.buffer.ByteBufOutputStream;
-import io.netty.util.internal.PlatformDependent;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
 import com.corundumstudio.socketio.AckCallback;
 import com.corundumstudio.socketio.MultiTypeAckCallback;
 import com.corundumstudio.socketio.namespace.Namespace;
@@ -38,18 +22,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.BeanDescription;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.Module;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationConfig;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonArrayFormatVisitor;
 import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonFormatTypes;
@@ -60,6 +33,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.fasterxml.jackson.databind.type.ArrayType;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.buffer.ByteBufOutputStream;
+import io.netty.util.internal.PlatformDependent;
+
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.*;
 
 
 public class JacksonJsonSupport implements JsonSupport {
@@ -73,25 +53,25 @@ public class JacksonJsonSupport implements JsonSupport {
         }
 
         @Override
-        public AckArgs deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
-            List<Object> args = new ArrayList<>();
-            AckArgs result = new AckArgs(args);
+        public AckArgs deserialize(final JsonParser jp, final DeserializationContext ctxt) throws IOException {
+            final List<Object> args = new ArrayList<>();
+            final AckArgs result = new AckArgs(args);
 
-            ObjectMapper mapper = (ObjectMapper) jp.getCodec();
-            JsonNode root = mapper.readTree(jp);
-            AckCallback<?> callback = currentAckClass.get();
-            Iterator<JsonNode> iter = root.iterator();
+            final ObjectMapper mapper = (ObjectMapper) jp.getCodec();
+            final JsonNode root = mapper.readTree(jp);
+            final AckCallback<?> callback = JacksonJsonSupport.this.currentAckClass.get();
+            final Iterator<JsonNode> iter = root.iterator();
             int i = 0;
             while (iter.hasNext()) {
-                Object val;
+                final Object val;
 
                 Class<?> clazz = callback.getResultClass();
                 if (callback instanceof MultiTypeAckCallback) {
-                    MultiTypeAckCallback multiTypeAckCallback = (MultiTypeAckCallback) callback;
+                    final MultiTypeAckCallback multiTypeAckCallback = (MultiTypeAckCallback) callback;
                     clazz = multiTypeAckCallback.getResultClasses()[i];
                 }
 
-                JsonNode arg = iter.next();
+                final JsonNode arg = iter.next();
                 if (arg.isTextual() || arg.isBoolean()) {
                     clazz = Object.class;
                 }
@@ -107,10 +87,10 @@ public class JacksonJsonSupport implements JsonSupport {
 
     public static class EventKey {
 
-        private String namespaceName;
-        private String eventName;
+        private final String namespaceName;
+        private final String eventName;
 
-        public EventKey(String namespaceName, String eventName) {
+        public EventKey(final String namespaceName, final String eventName) {
             super();
             this.namespaceName = namespaceName;
             this.eventName = eventName;
@@ -120,30 +100,37 @@ public class JacksonJsonSupport implements JsonSupport {
         public int hashCode() {
             final int prime = 31;
             int result = 1;
-            result = prime * result + ((eventName == null) ? 0 : eventName.hashCode());
-            result = prime * result + ((namespaceName == null) ? 0 : namespaceName.hashCode());
+            result = prime * result + ((this.eventName == null) ? 0 : this.eventName.hashCode());
+            result = prime * result + ((this.namespaceName == null) ? 0 : this.namespaceName.hashCode());
             return result;
         }
 
         @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
+        public boolean equals(final Object obj) {
+            if (this == obj) {
                 return true;
-            if (obj == null)
+            }
+            if (obj == null) {
                 return false;
-            if (getClass() != obj.getClass())
+            }
+            if (this.getClass() != obj.getClass()) {
                 return false;
-            EventKey other = (EventKey) obj;
-            if (eventName == null) {
-                if (other.eventName != null)
+            }
+            final EventKey other = (EventKey) obj;
+            if (this.eventName == null) {
+                if (other.eventName != null) {
                     return false;
-            } else if (!eventName.equals(other.eventName))
+                }
+            } else if (!this.eventName.equals(other.eventName)) {
                 return false;
-            if (namespaceName == null) {
-                if (other.namespaceName != null)
+            }
+            if (this.namespaceName == null) {
+                if (other.namespaceName != null) {
                     return false;
-            } else if (!namespaceName.equals(other.namespaceName))
+                }
+            } else if (!this.namespaceName.equals(other.namespaceName)) {
                 return false;
+            }
             return true;
         }
 
@@ -161,24 +148,24 @@ public class JacksonJsonSupport implements JsonSupport {
         }
 
         @Override
-        public Event deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
-            ObjectMapper mapper = (ObjectMapper) jp.getCodec();
-            String eventName = jp.nextTextValue();
+        public Event deserialize(final JsonParser jp, final DeserializationContext ctxt) throws IOException {
+            final ObjectMapper mapper = (ObjectMapper) jp.getCodec();
+            final String eventName = jp.nextTextValue();
 
-            EventKey ek = new EventKey(namespaceClass.get(), eventName);
-            if (!eventMapping.containsKey(ek)) {
+            EventKey ek = new EventKey(JacksonJsonSupport.this.namespaceClass.get(), eventName);
+            if (!this.eventMapping.containsKey(ek)) {
                 ek = new EventKey(Namespace.DEFAULT_NAME, eventName);
-                if (!eventMapping.containsKey(ek)) {
+                if (!this.eventMapping.containsKey(ek)) {
                     return new Event(eventName, Collections.emptyList());
                 }
             }
 
-            List<Object> eventArgs = new ArrayList<>();
-            Event event = new Event(eventName, eventArgs);
-            List<Class<?>> eventClasses = eventMapping.get(ek);
+            final List<Object> eventArgs = new ArrayList<>();
+            final Event event = new Event(eventName, eventArgs);
+            final List<Class<?>> eventClasses = this.eventMapping.get(ek);
             int i = 0;
             while (true) {
-                JsonToken token = jp.nextToken();
+                final JsonToken token = jp.nextToken();
                 if (token == JsonToken.END_ARRAY) {
                     break;
                 }
@@ -186,8 +173,8 @@ public class JacksonJsonSupport implements JsonSupport {
 //                    log.debug("Event {} has more args than declared in handler: {}", eventName, null);
                     break;
                 }
-                Class<?> eventClass = eventClasses.get(i);
-                Object arg = mapper.readValue(jp, eventClass);
+                final Class<?> eventClass = eventClasses.get(i);
+                final Object arg = mapper.readValue(jp, eventClass);
                 eventArgs.add(arg);
                 i++;
             }
@@ -208,41 +195,41 @@ public class JacksonJsonSupport implements JsonSupport {
         }
 
         @Override
-        public boolean isEmpty(SerializerProvider provider,byte[] value) {
+        public boolean isEmpty(final SerializerProvider provider, final byte[] value) {
             return (value == null) || (value.length == 0);
         }
 
         @Override
-        public void serialize(byte[] value, JsonGenerator jgen, SerializerProvider provider)
+        public void serialize(final byte[] value, final JsonGenerator jgen, final SerializerProvider provider)
             throws IOException {
-            Map<String, Object> map = new HashMap<>();
-            map.put("num", arrays.get().size());
+            final Map<String, Object> map = new HashMap<>();
+            map.put("num", this.arrays.get().size());
             map.put("_placeholder", true);
             jgen.writeObject(map);
-            arrays.get().add(value);
+            this.arrays.get().add(value);
         }
 
         @Override
-        public void serializeWithType(byte[] value, JsonGenerator jgen, SerializerProvider provider,
-                TypeSerializer typeSer)
+        public void serializeWithType(final byte[] value, final JsonGenerator jgen, final SerializerProvider provider,
+                                      final TypeSerializer typeSer)
             throws IOException {
-            serialize(value, jgen, provider);
+            this.serialize(value, jgen, provider);
         }
 
         @Override
-        public JsonNode getSchema(SerializerProvider provider, Type typeHint)
+        public JsonNode getSchema(final SerializerProvider provider, final Type typeHint)
         {
-            ObjectNode o = createSchemaNode("array", true);
-            ObjectNode itemSchema = createSchemaNode("string"); //binary values written as strings?
+            final ObjectNode o = this.createSchemaNode("array", true);
+            final ObjectNode itemSchema = this.createSchemaNode("string"); //binary values written as strings?
             return o.set("items", itemSchema);
         }
 
         @Override
-        public void acceptJsonFormatVisitor(JsonFormatVisitorWrapper visitor, JavaType typeHint)
+        public void acceptJsonFormatVisitor(final JsonFormatVisitorWrapper visitor, final JavaType typeHint)
                 throws JsonMappingException
         {
             if (visitor != null) {
-                JsonArrayFormatVisitor v2 = visitor.expectArrayFormat(typeHint);
+                final JsonArrayFormatVisitor v2 = visitor.expectArrayFormat(typeHint);
                 if (v2 != null) {
                     v2.itemsFormat(JsonFormatTypes.STRING);
                 }
@@ -250,11 +237,11 @@ public class JacksonJsonSupport implements JsonSupport {
         }
 
         public List<byte[]> getArrays() {
-            return arrays.get();
+            return this.arrays.get();
         }
 
         public void clear() {
-            arrays.set(new ArrayList<>());
+            this.arrays.set(new ArrayList<>());
         }
 
     }
@@ -265,8 +252,8 @@ public class JacksonJsonSupport implements JsonSupport {
         private final ByteArraySerializer serializer = new ByteArraySerializer();
 
         @Override
-        public JsonSerializer<?> modifyArraySerializer(SerializationConfig config, ArrayType valueType,
-                BeanDescription beanDesc, JsonSerializer<?> serializer) {
+        public JsonSerializer<?> modifyArraySerializer(final SerializationConfig config, final ArrayType valueType,
+                                                       final BeanDescription beanDesc, final JsonSerializer<?> serializer) {
             if (valueType.getRawClass().equals(byte[].class)) {
                 return this.serializer;
             }
@@ -275,7 +262,7 @@ public class JacksonJsonSupport implements JsonSupport {
         }
 
         public ByteArraySerializer getSerializer() {
-            return serializer;
+            return this.serializer;
         }
 
     }
@@ -292,18 +279,18 @@ public class JacksonJsonSupport implements JsonSupport {
         this(new Module[] {});
     }
 
-    public JacksonJsonSupport(Module... modules) {
+    public JacksonJsonSupport(final Module... modules) {
         if (modules != null && modules.length > 0) {
-            objectMapper.registerModules(modules);
+            this.objectMapper.registerModules(modules);
         }
-        init(objectMapper);
+        this.init(this.objectMapper);
     }
 
-    protected void init(ObjectMapper objectMapper) {
-        SimpleModule module = new SimpleModule();
-        module.setSerializerModifier(modifier);
-        module.addDeserializer(Event.class, eventDeserializer);
-        module.addDeserializer(AckArgs.class, ackArgsDeserializer);
+    protected void init(final ObjectMapper objectMapper) {
+        final SimpleModule module = new SimpleModule();
+        module.setSerializerModifier(this.modifier);
+        module.addDeserializer(Event.class, this.eventDeserializer);
+        module.addDeserializer(AckArgs.class, this.ackArgsDeserializer);
         objectMapper.registerModule(module);
 
         objectMapper.setSerializationInclusion(Include.NON_NULL);
@@ -313,36 +300,36 @@ public class JacksonJsonSupport implements JsonSupport {
     }
 
     @Override
-    public void addEventMapping(String namespaceName, String eventName, Class<?> ... eventClass) {
-        eventDeserializer.eventMapping.put(new EventKey(namespaceName, eventName), Arrays.asList(eventClass));
+    public void addEventMapping(final String namespaceName, final String eventName, final Class<?>... eventClass) {
+        this.eventDeserializer.eventMapping.put(new EventKey(namespaceName, eventName), Arrays.asList(eventClass));
     }
 
     @Override
-    public void removeEventMapping(String namespaceName, String eventName) {
-        eventDeserializer.eventMapping.remove(new EventKey(namespaceName, eventName));
+    public void removeEventMapping(final String namespaceName, final String eventName) {
+        this.eventDeserializer.eventMapping.remove(new EventKey(namespaceName, eventName));
     }
 
     @Override
-    public <T> T readValue(String namespaceName, ByteBufInputStream src, Class<T> valueType) throws IOException {
-        namespaceClass.set(namespaceName);
-        return objectMapper.readValue((InputStream) src, valueType);
+    public <T> T readValue(final String namespaceName, final ByteBufInputStream src, final Class<T> valueType) throws IOException {
+        this.namespaceClass.set(namespaceName);
+        return this.objectMapper.readValue(src, valueType);
     }
 
     @Override
-    public AckArgs readAckArgs(ByteBufInputStream src, AckCallback<?> callback) throws IOException {
-        currentAckClass.set(callback);
-        return objectMapper.readValue((InputStream) src, AckArgs.class);
+    public AckArgs readAckArgs(final ByteBufInputStream src, final AckCallback<?> callback) throws IOException {
+        this.currentAckClass.set(callback);
+        return this.objectMapper.readValue(src, AckArgs.class);
     }
 
     @Override
-    public void writeValue(ByteBufOutputStream out, Object value) throws IOException {
-        modifier.getSerializer().clear();
-        objectMapper.writeValue((OutputStream) out, value);
+    public void writeValue(final ByteBufOutputStream out, final Object value) throws IOException {
+        this.modifier.getSerializer().clear();
+        this.objectMapper.writeValue(out, value);
     }
 
     @Override
     public List<byte[]> getArrays() {
-        return modifier.getSerializer().getArrays();
+        return this.modifier.getSerializer().getArrays();
     }
 
 }
