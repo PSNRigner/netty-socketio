@@ -26,8 +26,8 @@ public interface DataListener<T> {
      * @param client - receiver
      * @param data - received object
      * @param ackSender - ack request
-     * 
-     * @throws Exception
+     *
+     * @throws Exception all exception
      */
     void onData(SocketIOClient client, T data, AckRequest ackSender) throws Exception;
 

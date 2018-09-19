@@ -15,12 +15,12 @@
  */
 package com.corundumstudio.socketio;
 
+import com.corundumstudio.socketio.protocol.Packet;
+import com.corundumstudio.socketio.store.Store;
+
 import java.net.SocketAddress;
 import java.util.Set;
 import java.util.UUID;
-
-import com.corundumstudio.socketio.protocol.Packet;
-import com.corundumstudio.socketio.store.Store;
 
 
 /**
@@ -110,7 +110,7 @@ public interface SocketIOClient extends ClientOperations, Store {
     Set<String> getAllRooms();
 
     /**
-     *
+     *  @return ip string
      */
     String getClientIp();
 
