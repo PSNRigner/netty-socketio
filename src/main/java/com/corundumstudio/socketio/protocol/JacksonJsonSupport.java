@@ -36,7 +36,7 @@ import com.fasterxml.jackson.databind.type.ArrayType;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.util.internal.PlatformDependent;
-import com.fasterxml.jackson.databind.Module;
+
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.*;
@@ -276,10 +276,10 @@ public class JacksonJsonSupport implements JsonSupport {
 
 
     public JacksonJsonSupport() {
-        this(new Module[] {});
+        this(new com.fasterxml.jackson.databind.Module[]{});
     }
 
-    public JacksonJsonSupport(final Module... modules) {
+    public JacksonJsonSupport(final com.fasterxml.jackson.databind.Module... modules) {
         if (modules != null && modules.length > 0) {
             this.objectMapper.registerModules(modules);
         }
