@@ -55,9 +55,9 @@ public class WebSocketTransport extends ChannelInboundHandlerAdapter {
 
     private final boolean isSsl;
 
-    public WebSocketTransport(final boolean isSsl,
-                              final AuthorizeHandler authorizeHandler, final Configuration configuration,
-                              final CancelableScheduler scheduler, final ClientsBox clientsBox) {
+    public WebSocketTransport(boolean isSsl,
+                              AuthorizeHandler authorizeHandler, Configuration configuration,
+                              CancelableScheduler scheduler, ClientsBox clientsBox) {
         this.isSsl = isSsl;
         this.authorizeHandler = authorizeHandler;
         this.configuration = configuration;
@@ -66,22 +66,22 @@ public class WebSocketTransport extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause) throws Exception {
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         super.exceptionCaught(ctx, cause);
-        final Channel channel = ctx.channel();
+        Channel channel = ctx.channel();
         if (channel.isActive()) {
             ctx.close();
         }
     }
 
     @Override
-    public void channelRead(final ChannelHandlerContext ctx, final Object msg) throws Exception {
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (msg instanceof CloseWebSocketFrame) {
           ctx.channel().writeAndFlush(msg).addListener(ChannelFutureListener.CLOSE);
         } else if (msg instanceof BinaryWebSocketFrame
                     || msg instanceof TextWebSocketFrame) {
-            final ByteBufHolder frame = (ByteBufHolder) msg;
-            final ClientHead client = this.clientsBox.get(ctx.channel());
+            ByteBufHolder frame = (ByteBufHolder) msg;
+            ClientHead client = this.clientsBox.get(ctx.channel());
             if (client == null) {
                 log.debug("Client with was already disconnected. Channel closed!");
                 ctx.channel().close();
@@ -92,11 +92,11 @@ public class WebSocketTransport extends ChannelInboundHandlerAdapter {
             ctx.pipeline().fireChannelRead(new PacketsMessage(client, frame.content(), Transport.WEBSOCKET));
             frame.release();
         } else if (msg instanceof FullHttpRequest) {
-            final FullHttpRequest req = (FullHttpRequest) msg;
-            final QueryStringDecoder queryDecoder = new QueryStringDecoder(req.uri());
-            final String path = queryDecoder.path();
-            final List<String> transport = queryDecoder.parameters().get("transport");
-            final List<String> sid = queryDecoder.parameters().get("sid");
+            FullHttpRequest req = (FullHttpRequest) msg;
+            QueryStringDecoder queryDecoder = new QueryStringDecoder(req.uri());
+            String path = queryDecoder.path();
+            List<String> transport = queryDecoder.parameters().get("transport");
+            List<String> sid = queryDecoder.parameters().get("sid");
 
             if (transport != null && NAME.equals(transport.get(0))) {
                 try {
@@ -106,10 +106,10 @@ public class WebSocketTransport extends ChannelInboundHandlerAdapter {
                         return;
                     }
                     if (sid != null && sid.get(0) != null) {
-                        final UUID sessionId = UUID.fromString(sid.get(0));
+                        UUID sessionId = UUID.fromString(sid.get(0));
                         this.handshake(ctx, sessionId, path, req);
                     } else {
-                        final ClientHead client = ctx.channel().attr(ClientHead.CLIENT).get();
+                        ClientHead client = ctx.channel().attr(ClientHead.CLIENT).get();
                         // first connection
                         this.handshake(ctx, client.getSessionId(), path, req);
                     }
@@ -125,8 +125,8 @@ public class WebSocketTransport extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelReadComplete(final ChannelHandlerContext ctx) throws Exception {
-        final ClientHead client = this.clientsBox.get(ctx.channel());
+    public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+        ClientHead client = this.clientsBox.get(ctx.channel());
         if (client != null && client.isTransportChannel(ctx.channel(), Transport.WEBSOCKET)) {
             ctx.flush();
         } else {
@@ -135,10 +135,10 @@ public class WebSocketTransport extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelInactive(final ChannelHandlerContext ctx) throws Exception {
-        final  Channel channel = ctx.channel();
-        final ClientHead client = this.clientsBox.get(channel);
-        final Packet packet = new Packet(PacketType.MESSAGE);
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        Channel channel = ctx.channel();
+        ClientHead client = this.clientsBox.get(channel);
+        Packet packet = new Packet(PacketType.MESSAGE);
         packet.setSubType(PacketType.DISCONNECT);
         if (client != null && client.isTransportChannel(ctx.channel(), Transport.WEBSOCKET)) {
             log.debug("channel inactive {}", client.getSessionId());
@@ -152,14 +152,14 @@ public class WebSocketTransport extends ChannelInboundHandlerAdapter {
         ctx.close();
     }
 
-    private void handshake(final ChannelHandlerContext ctx, final UUID sessionId, final String path, final FullHttpRequest req) {
-        final Channel channel = ctx.channel();
+    private void handshake(ChannelHandlerContext ctx, UUID sessionId, String path, FullHttpRequest req) {
+        Channel channel = ctx.channel();
 
-        final WebSocketServerHandshakerFactory factory =
+        WebSocketServerHandshakerFactory factory =
                 new WebSocketServerHandshakerFactory(this.getWebSocketLocation(req), null, true, this.configuration.getMaxFramePayloadLength());
-        final WebSocketServerHandshaker handshaker = factory.newHandshaker(req);
+        WebSocketServerHandshaker handshaker = factory.newHandshaker(req);
         if (handshaker != null) {
-            final ChannelFuture f = handshaker.handshake(channel, req);
+            ChannelFuture f = handshaker.handshake(channel, req);
             f.addListener((ChannelFutureListener) future -> {
                 if (!future.isSuccess()) {
                     log.error("Can't handshake " + sessionId, future.cause());
@@ -175,8 +175,8 @@ public class WebSocketTransport extends ChannelInboundHandlerAdapter {
         }
     }
 
-    private void connectClient(final Channel channel, final UUID sessionId) {
-        final ClientHead client = this.clientsBox.get(sessionId);
+    private void connectClient(Channel channel, UUID sessionId) {
+        ClientHead client = this.clientsBox.get(sessionId);
         if (client == null) {
             log.warn("Unauthorized client with sessionId: {} with ip: {}. Channel closed!",
                         sessionId, channel.remoteAddress());
@@ -189,9 +189,9 @@ public class WebSocketTransport extends ChannelInboundHandlerAdapter {
         this.authorizeHandler.connect(client);
 
         if (client.getCurrentTransport() == Transport.POLLING) {
-            final SchedulerKey key = new SchedulerKey(SchedulerKey.Type.UPGRADE_TIMEOUT, sessionId);
+            SchedulerKey key = new SchedulerKey(SchedulerKey.Type.UPGRADE_TIMEOUT, sessionId);
             this.scheduler.schedule(key, () -> {
-                final ClientHead clientHead = this.clientsBox.get(sessionId);
+                ClientHead clientHead = this.clientsBox.get(sessionId);
                 if (clientHead != null) {
                     if (log.isDebugEnabled()) {
                         log.debug("client did not complete upgrade - closing transport");
@@ -204,7 +204,7 @@ public class WebSocketTransport extends ChannelInboundHandlerAdapter {
         log.debug("сlient {} handshake completed", sessionId);
     }
 
-    private String getWebSocketLocation(final HttpRequest req) {
+    private String getWebSocketLocation(HttpRequest req) {
         String protocol = "ws://";
         if (this.isSsl) {
             protocol = "wss://";
