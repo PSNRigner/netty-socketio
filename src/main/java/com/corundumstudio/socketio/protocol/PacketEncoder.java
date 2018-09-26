@@ -15,6 +15,7 @@
  */
 package com.corundumstudio.socketio.protocol;
 
+import com.corundumstudio.socketio.Configuration;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.ByteBufOutputStream;
@@ -27,8 +28,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
-
-import com.corundumstudio.socketio.Configuration;
 
 public class PacketEncoder {
 
@@ -47,11 +46,11 @@ public class PacketEncoder {
     }
 
     public JsonSupport getJsonSupport() {
-        return jsonSupport;
+        return this.jsonSupport;
     }
     
     public ByteBuf allocateBuffer(ByteBufAllocator allocator) {
-        if (configuration.isPreferDirectBuffer()) {
+        if (this.configuration.isPreferDirectBuffer()) {
             return allocator.ioBuffer();
         }
 
@@ -61,7 +60,7 @@ public class PacketEncoder {
     public void encodeJsonP(Integer jsonpIndex, Queue<Packet> packets, ByteBuf out, ByteBufAllocator allocator, int limit) throws IOException {
         boolean jsonpMode = jsonpIndex != null;
 
-        ByteBuf buf = allocateBuffer(allocator);
+        ByteBuf buf = this.allocateBuffer(allocator);
 
         int i = 0;
         while (true) {
@@ -70,8 +69,8 @@ public class PacketEncoder {
                 break;
             }
 
-            ByteBuf packetBuf = allocateBuffer(allocator);
-            encodePacket(packet, packetBuf, allocator, true);
+            ByteBuf packetBuf = this.allocateBuffer(allocator);
+            this.encodePacket(packet, packetBuf, allocator, true);
 
             int packetSize = packetBuf.writerIndex();
             buf.writeBytes(toChars(packetSize));
@@ -97,7 +96,7 @@ public class PacketEncoder {
             out.writeBytes(JSONP_START);
         }
 
-        processUtf8(buf, out, jsonpMode);
+        this.processUtf8(buf, out, jsonpMode);
         buf.release();
 
         if (jsonpMode) {
@@ -127,7 +126,7 @@ public class PacketEncoder {
             if (packet == null || i == limit) {
                 break;
             }
-            encodePacket(packet, buffer, allocator, false);
+            this.encodePacket(packet, buffer, allocator, false);
 
             i++;
 
@@ -168,9 +167,11 @@ public class PacketEncoder {
 
     // Requires positive x
     static int stringSize(long x) {
-        for (int i = 0;; i++)
-            if (x <= sizeTable[i])
+        for (int i = 0; ; i++) {
+            if (x <= sizeTable[i]) {
                 return i + 1;
+            }
+        }
     }
 
     static void getChars(long i, int index, byte[] buf) {
@@ -200,8 +201,9 @@ public class PacketEncoder {
             r = i - ((q << 3) + (q << 1)); // r = i-(q*10) ...
             buf[--charPos] = (byte) digits[(int)r];
             i = q;
-            if (i == 0)
+            if (i == 0) {
                 break;
+            }
         }
         if (sign != 0) {
             buf[--charPos] = sign;
@@ -230,9 +232,9 @@ public class PacketEncoder {
     public void encodePacket(Packet packet, ByteBuf buffer, ByteBufAllocator allocator, boolean binary) throws IOException {
         ByteBuf buf = buffer;
         if (!binary) {
-            buf = allocateBuffer(allocator);
+            buf = this.allocateBuffer(allocator);
         }
-        byte type = toChar(packet.getType().getValue());
+        byte type = this.toChar(packet.getType().getValue());
         buf.writeByte(type);
 
         try {
@@ -245,7 +247,7 @@ public class PacketEncoder {
 
                 case OPEN: {
                     ByteBufOutputStream out = new ByteBufOutputStream(buf);
-                    jsonSupport.writeValue(out, packet.getData());
+                    this.jsonSupport.writeValue(out, packet.getData());
                     break;
                 }
 
@@ -254,30 +256,30 @@ public class PacketEncoder {
                     ByteBuf encBuf = null;
 
                     if (packet.getSubType() == PacketType.ERROR) {
-                        encBuf = allocateBuffer(allocator);
+                        encBuf = this.allocateBuffer(allocator);
 
                         ByteBufOutputStream out = new ByteBufOutputStream(encBuf);
-                        jsonSupport.writeValue(out, packet.getData());
+                        this.jsonSupport.writeValue(out, packet.getData());
                     }
 
                     if (packet.getSubType() == PacketType.EVENT
                             || packet.getSubType() == PacketType.ACK) {
 
-                        List<Object> values = new ArrayList<Object>();
+                        List<Object> values = new ArrayList<>();
                         if (packet.getSubType() == PacketType.EVENT) {
                             values.add(packet.getName());
                         }
 
-                        encBuf = allocateBuffer(allocator);
+                        encBuf = this.allocateBuffer(allocator);
 
                         List<Object> args = packet.getData();
                         values.addAll(args);
                         ByteBufOutputStream out = new ByteBufOutputStream(encBuf);
-                        jsonSupport.writeValue(out, values);
+                        this.jsonSupport.writeValue(out, values);
 
-                        if (!jsonSupport.getArrays().isEmpty()) {
-                            packet.initAttachments(jsonSupport.getArrays().size());
-                            for (byte[] array : jsonSupport.getArrays()) {
+                        if (!this.jsonSupport.getArrays().isEmpty()) {
+                            packet.initAttachments(this.jsonSupport.getArrays().size());
+                            for (byte[] array : this.jsonSupport.getArrays()) {
                                 packet.addAttachment(Unpooled.wrappedBuffer(array));
                             }
                             packet.setSubType(packet.getSubType() == PacketType.ACK
@@ -285,7 +287,7 @@ public class PacketEncoder {
                         }
                     }
 
-                    byte subType = toChar(packet.getSubType().getValue());
+                    byte subType = this.toChar(packet.getSubType().getValue());
                     buf.writeByte(subType);
 
                     if (packet.hasAttachments()) {
