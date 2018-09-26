@@ -317,6 +317,7 @@ public class PacketEncoder {
 
                     break;
                 }
+                default:
             }
         } finally {
             // we need to write a buffer in any case
