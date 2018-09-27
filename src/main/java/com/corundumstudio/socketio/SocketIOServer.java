@@ -17,6 +17,7 @@ package com.corundumstudio.socketio;
 
 import com.corundumstudio.socketio.listener.*;
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.FixedRecvByteBufAllocator;
@@ -31,6 +32,7 @@ import io.netty.util.concurrent.FutureListener;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,6 +58,8 @@ public class SocketIOServer implements ClientListeners {
 
     private EventLoopGroup bossGroup;
     private EventLoopGroup workerGroup;
+
+    private ChannelFuture channelFuture;
 
     public SocketIOServer(Configuration configuration) {
         this.configuration = configuration;
@@ -146,7 +150,9 @@ public class SocketIOServer implements ClientListeners {
             addr = new InetSocketAddress(configCopy.getHostname(), configCopy.getPort());
         }
 
-        return b.bind(addr).addListener((FutureListener<Void>) future -> {
+        channelFuture = b.bind(addr);
+
+        return channelFuture.addListener((FutureListener<Void>) future -> {
             if (future.isSuccess()) {
                 log.info("SocketIO server started at port: {}", configCopy.getPort());
             } else {
@@ -186,10 +192,15 @@ public class SocketIOServer implements ClientListeners {
      * Stop server
      */
     public void stop() {
-        bossGroup.shutdownGracefully().syncUninterruptibly();
-        workerGroup.shutdownGracefully().syncUninterruptibly();
+        bossGroup.shutdownGracefully(1L, 2L, TimeUnit.SECONDS).syncUninterruptibly();
+        workerGroup.shutdownGracefully(1L, 2L, TimeUnit.SECONDS).syncUninterruptibly();
 
         pipelineFactory.stop();
+
+        if (channelFuture != null && channelFuture.channel() != null) {
+            channelFuture.channel().closeFuture().syncUninterruptibly();
+        }
+
         log.info("SocketIO server stopped");
     }
 
